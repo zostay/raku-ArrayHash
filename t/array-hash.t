@@ -86,6 +86,11 @@ my %tests =
         @array[1] :delete;
         is %hash.elems, 3, 'after array delete elems still == 3';
     },
+    '08-perl' => {
+        my @els = q["a" =x> 1], q["b" =x> 2], q["c" =x> 3];
+        is @array.perl, q[array-hash(] ~ @els[.[0], .[1], .[2]].join(', ') ~ q[)], "array.perl";
+        is %hash.perl, q[array-hash(] ~ @els[.[0], .[1], .[2]].join(', ') ~ q[)], "hash.perl";
+    },
 ;
 
 for %tests.kv -> $desc, &test {
