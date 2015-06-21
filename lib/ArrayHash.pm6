@@ -30,14 +30,27 @@ has KnottyPair @!array handles <
     pick roll reduce combinations
 >;
 
-method new(*@a, *%h) {
-    my $self = self.bless;
+has Bool $multivalued;
+
+method new(*@a, *%h, Bool :$multivalued = False) {
+    my $self = self.bless(:$multivalued);
     $self.push: |@a, |%h;
     $self
 }
 
+submethod BUILD(:$!multivalued) { self }
+
 method of() {
     self.Positional::of();
+}
+
+method !clear-before($pos, $key) returns Bool {
+    my @pos = @!array[0 .. $pos - 1].grep-index(*.key eqv $key);
+    @!array[@pos] :delete;
+}
+
+method !found-after($pos, $key) returns Bool {
+    @!array[$pos + 1 .. @!array.end].first-index(*.key eqv $key) >= 0
 }
 
 method AT-KEY(ArrayHash:D: $key) { 
@@ -49,6 +62,8 @@ method AT-POS(ArrayHash:D: $pos) returns KnottyPair {
 }
 
 method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) { 
+    POST { %!hash{$key} =:= @!array.first(*.key eqv $key).value }
+
     if %!hash{$key} :exists {
         %!hash{$key} = $value;
     }
@@ -56,13 +71,14 @@ method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) {
         @!array.push: $key =X> $value;
         %!hash{$key} := $value;
     }
-
-    %!hash{$key} =:= @!array.first(*.key eqv $key).value
-        or die "internal representation mismatch";
 }
 
 method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
-    if @!array[$pos] :exists {
+    PRE  { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
+    POST { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
+    POST { %!hash{$pair.key} =:= @!array.first(*.key eqv $pair.key).value }
+
+    if @!array[$pos] :exists && @!array[$pos].defined {
         %!hash{ @!array[$pos].key } :delete;
     }
 
@@ -71,6 +87,8 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw { 
+    POST { %!hash{$key} =:= @!array.first(*.key eqv $key).value }
+
     if %!hash{$key} :exists {
         %!hash{$key} := $value;
         my $pos = @!array.first-index(*.key eqv $key);
@@ -83,6 +101,10 @@ method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw {
 }
 
 method BIND-POS(ArrayHash:D: $pos, KnottyPair:D $pair is rw) {
+    PRE  { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
+    POST { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
+    POST { %!hash{$pair.key} =:= @!array.first(*.key eqv $pair.key).value }
+
     if @!array[$pos] :exists {
         %!hash{ @!array[$pos].key } :delete;
     }
