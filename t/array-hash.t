@@ -78,7 +78,14 @@ my %tests =
         is %hash<b>, 7, 'hash b modified';
         is @array[.[1]].value, 7, 'array b value modified';
     },
-
+    '06-delete-hash-squashes-blanks' => {
+        %hash<b> :delete;
+        is @array.elems, 2, 'after hash delete elems == 2';
+    },
+    '07-delete-array-keeps-blanks' => {
+        @array[1] :delete;
+        is %hash.elems, 3, 'after array delete elems still == 3';
+    },
 ;
 
 for %tests.kv -> $desc, &test {

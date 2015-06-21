@@ -124,6 +124,8 @@ method keys() returns List:D { @!array».key.list }
 method kv() returns List:D { @!array».kv.list }
 method pairs() returns List:D { @!array }
 
+method elems returns Int:D { @!array.elems }
+
 my role TypedArrayHash[::TValue] does Associative[TValue] does Positional[Pair] {
 
 }
