@@ -67,11 +67,15 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw { 
-    unless %!hash{$key} :exists {
+    if %!hash{$key} :exists {
+        %!hash{$key} := $value;
+        my $pos = @!array.first-index(*.key eqv $key);
+        @!array[$pos].bind-value($value);
+    }
+    else {
+        %!hash{$key} := $value;
         @!array.push: $key =X> $value;
     }
-
-    %!hash{$key} := $value;
 }
 
 method BIND-POS(ArrayHash:D: $pos, KnottyPair:D $pair is rw) {
@@ -110,7 +114,7 @@ method DELETE-POS(ArrayHash:D: $pos) returns KnottyPair {
 }
 
 method push(ArrayHash:D: *@values, *%values) {
-    for @values    -> $p     { self.ASSIGN-KEY($p.key, $p.value) }
+    for @values    -> $p     { self.ASSIGN-POS(@!array.elems, $p) }
     for %values.kv -> $k, $v { self.ASSIGN-KEY($k, $v) }
     Mu
 }

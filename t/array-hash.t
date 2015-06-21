@@ -33,7 +33,6 @@ my %inits =
         $init{'b'} := $b;
         @array := $init;
         %hash  := $init;
-        warn "# ", $init.values.perl;
         make-iter($init.values »-» 1);
     }, 
     '04-init-from-pairs-and-positionals' => {
@@ -74,16 +73,22 @@ my %tests =
         is %hash{'b'}, Any, 'hash b removed';
         is %hash{'e'}, 6, 'hash e added';
     },
+    '05-change-init-bound-var' => {
+        $b = 7;
+        is %hash<b>, 7, 'hash b modified';
+        is @array[.[1]].value, 7, 'array b value modified';
+    },
+
 ;
 
-for %inits.kv -> $init-desc, &init {
+for %tests.kv -> $desc, &test {
     subtest {
-        for %tests.kv -> $desc, &test {
+        for %inits.kv -> $init-desc, &init {
             diag "init: $init-desc, test: $desc";
             my $o = init();
-            subtest { temp $_ = $o; test() }, $desc;
+            subtest { temp $_ = $o; test() }, $init-desc;
         }
-    }, $init-desc;
+    }, $desc;
 }
 
 
