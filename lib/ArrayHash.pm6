@@ -44,7 +44,12 @@ has KnottyPair @!array handles <
     pick roll reduce combinations
 >;
 
-has Bool $multivalued;
+has Bool $.multivalued;
+
+# TODO make this a macro...
+sub want($key) {
+    & = { .defined && .key eqv $key }
+}
 
 method new(*@a, *%h, Bool :$multivalued = False) {
     my $self = self.bless(:$multivalued);
@@ -59,12 +64,12 @@ method of() {
 }
 
 method !clear-before($pos, $key) returns Bool {
-    my @pos = @!array[0 .. $pos - 1].grep-index(*.key eqv $key);
+    my @pos = @!array[0 .. $pos - 1].grep-index(want($key));
     @!array[@pos] :delete;
 }
 
 method !found-after($pos, $key) returns Bool {
-    @!array[$pos + 1 .. @!array.end].first-index(*.key eqv $key) ~~ Int
+    @!array[$pos + 1 .. @!array.end].first-index(want($key)) ~~ Int
 }
 
 method AT-KEY(ArrayHash:D: $key) { 
@@ -76,7 +81,7 @@ method AT-POS(ArrayHash:D: $pos) returns KnottyPair {
 }
 
 method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) { 
-    POST { %!hash{$key} =:= @!array.first(*.key eqv $key).value }
+    POST { %!hash{$key} =:= @!array[ @!array.last-index(want($key)) ].value }
 
     if %!hash{$key} :exists {
         %!hash{$key} = $value;
@@ -88,24 +93,28 @@ method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) {
 }
 
 method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
-    PRE  { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
-    POST { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
-    POST { %!hash{$pair.key} =:= @!array.first(*.key eqv $pair.key).value }
+    PRE  { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
+    POST { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
+    POST { %!hash{$pair.key} =:= @!array[ @!array.last-index(want($pair.key)) ].value }
+
+    if !$!multivalued && (%!hash{ $pair.key } :exists) {
+        self!clear-before($pos, $pair.key);
+    }
 
     if @!array[$pos] :exists && @!array[$pos].defined {
         %!hash{ @!array[$pos].key } :delete;
     }
 
     %!hash{ $pair.key } := $pair.value;
-    @!array[ $pos ] = $pair;
+    @!array[ $pos ]     := $pair;
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw { 
-    POST { %!hash{$key} =:= @!array.first(*.key eqv $key).value }
+    POST { %!hash{$key} =:= @!array.first(want($key)).value }
 
     if %!hash{$key} :exists {
         %!hash{$key} := $value;
-        my $pos = @!array.first-index(*.key eqv $key);
+        my $pos = @!array.first-index(want($key));
         @!array[$pos].bind-value($value);
     }
     else {
@@ -115,9 +124,9 @@ method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw {
 }
 
 method BIND-POS(ArrayHash:D: $pos, KnottyPair:D $pair is rw) {
-    PRE  { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
-    POST { $!multivalued || @!array.grep(*.key eqv $pair.key).elems <= 1 }
-    POST { %!hash{$pair.key} =:= @!array.first(*.key eqv $pair.key).value }
+    PRE  { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
+    POST { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
+    POST { %!hash{$pair.key} =:= @!array.first(want($pair.key)).value }
 
     if @!array[$pos] :exists {
         %!hash{ @!array[$pos].key } :delete;
@@ -137,10 +146,10 @@ method EXISTS-POS(ArrayHash:D: $pos) {
 
 method DELETE-KEY(ArrayHash:D: $key) {
     POST { %!hash{$key} :!exists }
-    POST { @!array.first-index(*.key eqv $key) ~~ Nil }
+    POST { @!array.first-index(want($key)) ~~ Nil }
 
     if %!hash{$key} :exists {
-        for @!array.grep-index(*.key eqv $key).reverse -> $pos {
+        for @!array.grep-index(want($key)).reverse -> $pos {
             @!array.splice($pos, 1);
         }
     }
@@ -154,12 +163,12 @@ method DELETE-POS(ArrayHash:D: $pos) returns KnottyPair {
     POST { @!array[$pos] ~~ KnottyPair:U }
     POST { 
         $pair.defined && !$!multivalued ??
-            @!array.first-index({ .defined && .key eqv $pair.key }) ~~ Nil
+            @!array.first-index(want($pair.key)) ~~ Nil
         !! True
     }
     POST {
         $pair.defined && $!multivalued ??
-            (@!array.first-index({ .defined && .key eqv $pair.key }) ~~ Int
+            (@!array.first-index(want($pair.key)) ~~ Int
                 orelse %!hash{ $pair.key } :exists)
         !! True
     }
@@ -232,7 +241,7 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     # matching pairs later in the list (the later items are kept).
     my @repl;
     for @values -> $p {
-        my $pos = @!array[$offset + 1 .. self.end].first-index(*.key eqv $p.key);
+        my $pos = @!array[$offset + 1 .. self.end].first-index(want($p.key));
         @repl.push($pos ~~ Int ?? $p !! KnottyPair);
     }
 
@@ -247,7 +256,7 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     # Nullify earlier values that have just been replaced
     for @!array[0 .. $offset].kv -> $i, $p {
         @!array[$i] :delete 
-            if @repl.grep({ .defined && .key eqv $p.key });
+            if @repl.grep(want($p.key));
     }
 
     # Return the removed elements
