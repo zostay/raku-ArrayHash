@@ -50,7 +50,7 @@ method !clear-before($pos, $key) returns Bool {
 }
 
 method !found-after($pos, $key) returns Bool {
-    @!array[$pos + 1 .. @!array.end].first-index(*.key eqv $key) >= 0
+    @!array[$pos + 1 .. @!array.end].first-index(*.key eqv $key) ~~ Int
 }
 
 method AT-KEY(ArrayHash:D: $key) { 
@@ -122,9 +122,13 @@ method EXISTS-POS(ArrayHash:D: $pos) {
 }
 
 method DELETE-KEY(ArrayHash:D: $key) {
+    POST { %!hash{$key} :!exists }
+    POST { @!array.first-index(*.key eqv $key) ~~ Nil }
+
     if %!hash{$key} :exists {
-        my $pos = @!array.first-index(*.key eqv $key);
-        @!array.splice($pos, 1);
+        for @!array.grep-index(*.key eqv $key).reverse -> $pos {
+            @!array.splice($pos, 1);
+        }
     }
 
     %!hash{$key} :delete;
@@ -132,6 +136,20 @@ method DELETE-KEY(ArrayHash:D: $key) {
 
 method DELETE-POS(ArrayHash:D: $pos) returns KnottyPair {
     my KnottyPair $pair;
+
+    POST { @!array[$pos] ~~ KnottyPair:U }
+    POST { 
+        $pair.defined && !$!multivalued ??
+            @!array.first-index({ .defined && .key eqv $pair.key }) ~~ Nil
+        !! True
+    }
+    POST {
+        $pair.defined && $!multivalued ??
+            (@!array.first-index({ .defined && .key eqv $pair.key }) ~~ Int
+                orelse %!hash{ $pair.key } :exists)
+        !! True
+    }
+
     if $pair = @!array[ $pos ] :delete {
         %!hash{ $pair.key } :delete;
     }
@@ -201,7 +219,7 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     my @repl;
     for @values -> $p {
         my $pos = @!array[$offset + 1 .. self.end].first-index(*.key eqv $p.key);
-        @repl.push($pos >= 0 ?? $p !! KnottyPair);
+        @repl.push($pos ~~ Int ?? $p !! KnottyPair);
     }
 
     # Splice the array
