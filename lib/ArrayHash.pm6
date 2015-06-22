@@ -19,7 +19,21 @@ our sub infix:«=X>» ($key, $value is rw) is export {
 
 =begin DESCRIPTION
 
+B<Experimental:> The API here is experimental. Some important aspects of the API may change without warning.
+
 You can think of this as a L<Hash> that always iterates in insertion order or you can think of this as an L<Array> of L<Pair>s with fast lookups on tha values. Both are correct. Though, this class uses L<KnottyPair> internally, rather than plain old Pairs.
+
+There is some amount of conflicting tension between a L<Positional> and L<Assocative> data structure. That is, an Associative object in Perl requires unique keys while a Positional containing a list of Pairs has no such restriction. This tension is resolved by two factors:
+
+=item The way you this object is used will determine how that tension is resolved.
+
+=item There are settings to resolve any additional nuances.
+
+For example, if you add 3 pairs in a row, each with the same key, the hash will always have the value of the pair inserted with teh greatest index. The array, then, will either contain each of those three pairs as duplicates or replace earlier pairs with a type object to mark them as undefined (depending on the L<#has $.multivalued> attribute).
+
+[Conjecture: Consider adding a C<has $.collapse> attribute or some such to govern whether a replaced value in a C<$.multivalued> array hash is replaced with a type object or spiced out. Or perhaps change the C<$.multivalued> into an enum of operational modes.]
+
+[Conjecture: In the future, a parameterizable version of this class could be created with some sort of general keyable object trait rather than KnottyPair.]
 
 =end DESCRIPTION
 
