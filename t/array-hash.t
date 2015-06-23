@@ -96,6 +96,19 @@ my %tests =
         is %hash<b>, 8, 'hash b changed';
         is @array[.[1]], KnottyPair:U, 'array 1 nullified';
     },
+    '09-replace-later' => {
+        if (.[1] == 0) {
+            @array[0] = 'b' =x> 9;
+            is %hash<b>, 9, 'hash b is changed';
+            is @array[0].key, 'b', 'array 0 key same';
+            is @array[0].value, 9, 'array 0 value changed';
+        }
+        else {
+            @array[0] = 'b' =x> 9;
+            is %hash<b>, 2, 'hash b is unchanged';
+            is @array[0], KnottyPair:U, 'array 0 nullified';
+        }
+    },
 ;
 
 for %tests.kv -> $desc, &test {

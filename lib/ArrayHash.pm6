@@ -111,8 +111,13 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
         %!hash{ @!array[$pos].key } :delete;
     }
 
-    %!hash{ $pair.key } := $pair.value;
-    @!array[ $pos ]      = $pair;
+    if self!found-after($pos, $pair.key) {
+        @!array[ $pos ] = KnottyPair;
+    }
+    else {
+        %!hash{ $pair.key } := $pair.value;
+        @!array[ $pos ]      = $pair;
+    }
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw { 
