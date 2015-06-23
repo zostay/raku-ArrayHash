@@ -63,8 +63,14 @@ method of() {
     self.Positional::of();
 }
 
-method !clear-before($pos, $key) returns Bool {
+method !clear-before($pos, $key) {
     my @pos = @!array[0 .. $pos - 1].grep-index(want($key));
+
+    # Rakudo Bug [perl #125457]
+    if @pos {
+        for @pos { @!array[$_] = KnottyPair }
+    }
+
     @!array[@pos] :delete;
 }
 
@@ -106,7 +112,7 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
     }
 
     %!hash{ $pair.key } := $pair.value;
-    @!array[ $pos ]     := $pair;
+    @!array[ $pos ]      = $pair;
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw { 

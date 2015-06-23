@@ -91,6 +91,11 @@ my %tests =
         is @array.perl, q[array-hash(] ~ @els[.[0], .[1], .[2]].join(', ') ~ q[)], "array.perl";
         is %hash.perl, q[array-hash(] ~ @els[.[0], .[1], .[2]].join(', ') ~ q[)], "hash.perl";
     },
+    '09-replace-earlier' => {
+        @array[3] = 'b' =x> 8;
+        is %hash<b>, 8, 'hash b changed';
+        is @array[.[1]], KnottyPair:U, 'array 1 nullified';
+    },
 ;
 
 for %tests.kv -> $desc, &test {
