@@ -112,7 +112,12 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
     }
 
     if self!found-after($pos, $pair.key) {
-        @!array[ $pos ] = KnottyPair;
+        if $!multivalued {
+            @!array[ $pos ] = $pair;
+        }
+        else {
+            @!array[ $pos ] = KnottyPair;
+        }
     }
     else {
         %!hash{ $pair.key } := $pair.value;
@@ -148,7 +153,12 @@ method BIND-POS(ArrayHash:D: $pos, KnottyPair:D $pair is rw) {
     }
 
     if self!found-after($pos, $pair.key) {
-        @!array[ $pos ] = KnottyPair;
+        if $!multivalued {
+            @!array[ $pos ] := $pair;
+        }
+        else {
+            @!array[ $pos ] = KnottyPair;
+        }
     }
     else {
         %!hash{ $pair.key } := $pair.value;
