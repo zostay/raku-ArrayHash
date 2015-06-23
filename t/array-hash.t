@@ -96,7 +96,7 @@ my %tests =
         is %hash<b>, 8, 'hash b changed';
         is @array[.[1]], KnottyPair:U, 'array 1 nullified';
     },
-    '09-replace-later' => {
+    '10-replace-later' => {
         if (.[1] == 0) {
             @array[0] = 'b' =x> 9;
             is %hash<b>, 9, 'hash b is changed';
@@ -105,6 +105,24 @@ my %tests =
         }
         else {
             @array[0] = 'b' =x> 9;
+            is %hash<b>, 2, 'hash b is unchanged';
+            is @array[0], KnottyPair:U, 'array 0 nullified';
+        }
+    },
+    '11-bind-replace-earlier' => {
+        @array[3] := 'b' =x> 8;
+        is %hash<b>, 8, 'hash b changed';
+        is @array[.[1]], KnottyPair:U, 'array 1 nullified';
+    },
+    '12-bind-replace-later' => {
+        if (.[1] == 0) {
+            @array[0] := 'b' =x> 9;
+            is %hash<b>, 9, 'hash b is changed';
+            is @array[0].key, 'b', 'array 0 key same';
+            is @array[0].value, 9, 'array 0 value changed';
+        }
+        else {
+            @array[0] := 'b' =x> 9;
             is %hash<b>, 2, 'hash b is unchanged';
             is @array[0], KnottyPair:U, 'array 0 nullified';
         }

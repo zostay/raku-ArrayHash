@@ -139,12 +139,21 @@ method BIND-POS(ArrayHash:D: $pos, KnottyPair:D $pair is rw) {
     POST { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
     POST { %!hash{$pair.key} =:= @!array.first(want($pair.key)).value }
 
-    if @!array[$pos] :exists {
+    if !$!multivalued && (%!hash{ $pair.key } :exists) {
+        self!clear-before($pos, $pair.key);
+    }
+
+    if @!array[$pos] :exists && @!array[$pos].defined {
         %!hash{ @!array[$pos].key } :delete;
     }
 
-    %!hash{ $pair } := $pair.value;
-    @!array[ $pos ] := $pair;
+    if self!found-after($pos, $pair.key) {
+        @!array[ $pos ] = KnottyPair;
+    }
+    else {
+        %!hash{ $pair.key } := $pair.value;
+        @!array[ $pos ]     := $pair;
+    }
 }
 
 method EXISTS-KEY(ArrayHash:D: $key) {
