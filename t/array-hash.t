@@ -127,6 +127,14 @@ my %tests =
             is @array[0], KnottyPair:U, 'array 0 nullified';
         }
     },
+    '13-bind-key' => {
+        %hash<a> := $b;
+        $b = 10;
+        is %hash<a>, 10, 'hash a changed';
+        is %hash<b>, 10, 'hash b changed too';
+        is @array[.[0]].value, 10, 'array 0 value changed';
+        is @array[.[1]].value, 10, 'array 1 value changed';
+    },
 ;
 
 for %tests.kv -> $desc, &test {
