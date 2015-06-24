@@ -147,6 +147,26 @@ my %tests =
         ok @array[2] :exists, 'yep 2 exists';
         ok @array[3] :!exists, 'nope 3 does not exist';
     },
+    '16-delete-key' => {
+        my $v = %hash<b> :delete;
+        is $v, $b, 'deleted value is correct';
+        is %hash.elems, 2, 'deleted hash shrunk by one elem';
+        is @array.elems, 2, 'delete array shrunk by one elem too';
+    },
+    '17-delete-pos' => {
+        my $p = @array[.[1]] :delete;
+        is $p.key, 'b', 'deleted key is b';
+        is $p.value, $b, 'deleted value is $b';
+        if .[1] == 2 {
+            is %hash.elems, 2, 'deleted hash shrunk by one elem';
+            is @array.elems, 2, 'deleted array shrunk by one elem too';
+        }
+        else {
+            is %hash.elems, 3, 'deleted hash did not shrink';
+            is @array.elems, 3, 'deleted array did not shrink';
+        }
+        is @array[.[1]], KnottyPair, 'deleted array position is undef';
+    },
 ;
 
 for %tests.kv -> $desc, &test {
