@@ -167,6 +167,27 @@ my %tests =
         }
         is @array[.[1]], KnottyPair, 'deleted array position is undef';
     },
+    '18-push' => {
+        @array.push: d => 11, 'e' =x> 12, b => 13, 'c' =x> 14;
+        is %hash<a>, 1, 'hash a same';
+        is %hash<b>, 13, 'hash b changed';
+        is %hash<c>, 14, 'hash c changed';
+        is %hash<d>, 11, 'hash d added';
+        is %hash<e>, 12, 'hash e added';
+
+        is @array[.[0]].key, 'a', 'array 0 key same';
+        is @array[.[0]].value, 1, 'array 0 value same';
+        is @array[.[1]].key, 'b', 'array 1 key same';
+        is @array[.[1]].value, 13, 'array 1 value changed';
+        is @array[.[2]], KnottyPair, 'array 2 nullified';
+
+        my %remains = c => 14, d => 11, e => 12;
+        for 3 .. 5 -> $i {
+            my $p = @array[$i];
+            my $v = %remains{ $p.key } :delete;
+            is $v, $p.value, 'got an expected value';
+        }
+    },
 ;
 
 for %tests.kv -> $desc, &test {
