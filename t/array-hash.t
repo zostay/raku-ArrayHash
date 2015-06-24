@@ -135,6 +135,18 @@ my %tests =
         is @array[.[0]].value, 10, 'array 0 value changed';
         is @array[.[1]].value, 10, 'array 1 value changed';
     },
+    '14-exists-key' => {
+        ok %hash<a> :exists, 'yep a exists';
+        ok %hash<b> :exists, 'yep b exists';
+        ok %hash<c> :exists, 'yep c exists';
+        ok %hash<d> :!exists, 'nope d does not exist';
+    },
+    '15-exists-pos' => {
+        ok @array[0] :exists, 'yep 0 exists';
+        ok @array[1] :exists, 'yep 1 exists';
+        ok @array[2] :exists, 'yep 2 exists';
+        ok @array[3] :!exists, 'nope 3 does not exist';
+    },
 ;
 
 for %tests.kv -> $desc, &test {
