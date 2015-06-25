@@ -188,6 +188,36 @@ my %tests =
             is $v, $p.value, 'got an expected value';
         }
     },
+    '19-unshift' => {
+        @array.unshift: d => 11, 'e' =x> 12, b => 13, 'c' =x> 14;
+        is %hash<a>, 1, 'hash a same';
+        is %hash<b>, $b, 'hash b same';
+        is %hash<c>, 3, 'hash c same';
+        is %hash<d>, 11, 'hash d added';
+        is %hash<e>, 12, 'hash e added';
+
+        my $blanks = 1;
+        my %remains = d => 11, e => 12;
+        for 0 .. 2 -> $i {
+            my $p = @array[$i];
+            if !$p.defined {
+                ok $blanks-- > 0, 'blank added';
+            }
+            else {
+                my $v = %remains{ $p.key } :delete;
+                is $v, $p.value, 'got an expected value';
+            }
+        }
+
+        diag @array.perl;
+
+        is @array[.[0] + 3].key, 'a', 'array 0 + 2 key same';
+        is @array[.[0] + 3].value, 1, 'array 0 + 2 value same';
+        is @array[.[1] + 3].key, 'b', 'array 1 + 2 key same';
+        is @array[.[1] + 3].value, $b, 'array 1 + 2 value same';
+        is @array[.[2] + 3].key, 'c', 'array 2 + 2 key same';
+        is @array[.[2] + 3].value, 3, 'array 2 + 2 value same';
+    },
 ;
 
 for %tests.kv -> $desc, &test {

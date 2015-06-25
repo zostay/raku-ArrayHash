@@ -233,6 +233,8 @@ method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
             %!hash{ $k } := $v;
         }
     }
+
+    self
 }
 
 multi method splice(&offset, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
