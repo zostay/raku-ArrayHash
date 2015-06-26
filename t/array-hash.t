@@ -218,6 +218,62 @@ my %tests =
         is @array[.[2] + 3].key, 'c', 'array 2 + 2 key same';
         is @array[.[2] + 3].value, 3, 'array 2 + 2 value same';
     },
+    '20-splice-push' => {
+        @array.splice: 3, 0, d => 11, 'e' =x> 12, b => 13, 'c' =x> 14;
+        is %hash<a>, 1, 'hash a same';
+        is %hash<b>, 13, 'hash b changed';
+        is %hash<c>, 14, 'hash c changed';
+        is %hash<d>, 11, 'hash d added';
+        is %hash<e>, 12, 'hash e added';
+
+        is @array[.[0]].key, 'a', 'array 0 key same';
+        is @array[.[0]].value, 1, 'array 0 value same';
+        is @array[.[1]], KnottyPair, 'array 1 nullified';
+        is @array[.[2]], KnottyPair, 'array 2 nullified';
+
+        my %remains = b => 13, c => 14, d => 11, e => 12;
+        for 3 .. 6 -> $i {
+            my $p = @array[$i];
+            my $v = %remains{ $p.key } :delete;
+            is $v, $p.value, 'got an expected value';
+        }
+    },
+    # '21-splice-unshift' => {
+    #     @array.splice: 0, 0, d => 11, 'e' =x> 12, b => 13, 'c' =x> 14;
+    #     is %hash<a>, 1, 'hash a same';
+    #     is %hash<b>, $b, 'hash b same';
+    #     is %hash<c>, 3, 'hash c same';
+    #     is %hash<d>, 11, 'hash d added';
+    #     is %hash<e>, 12, 'hash e added';
+
+    #     my $blanks = 1;
+    #     my %remains = d => 11, e => 12;
+    #     for 0 .. 2 -> $i {
+    #         my $p = @array[$i];
+    #         if !$p.defined {
+    #             ok $blanks-- > 0, 'blank added';
+    #         }
+    #         else {
+    #             my $v = %remains{ $p.key } :delete;
+    #             is $v, $p.value, 'got an expected value';
+    #         }
+    #     }
+
+    #     diag @array.perl;
+
+    #     is @array[.[0] + 3].key, 'a', 'array 0 + 2 key same';
+    #     is @array[.[0] + 3].value, 1, 'array 0 + 2 value same';
+    #     is @array[.[1] + 3].key, 'b', 'array 1 + 2 key same';
+    #     is @array[.[1] + 3].value, $b, 'array 1 + 2 value same';
+    #     is @array[.[2] + 3].key, 'c', 'array 2 + 2 key same';
+    #     is @array[.[2] + 3].value, 3, 'array 2 + 2 value same';
+    # },
+    # '22-splice-insert' => {
+    # },
+    # '23-splice-delete' => {
+    # },
+    # '24-splice-replace' => {
+    # },
 ;
 
 for %tests.kv -> $desc, &test {

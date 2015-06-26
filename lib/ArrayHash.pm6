@@ -272,9 +272,15 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     # Compile the list of replacements, nullifying those that have keys
     # matching pairs later in the list (the later items are kept).
     my @repl;
-    for @values -> $p {
-        my $pos = @!array[$offset + 1 .. self.end].first-index(want($p.key));
-        @repl.push($pos ~~ Int ?? $p !! KnottyPair);
+    for @values, %values.pairs -> $pair {
+        my $p = do given $pair {
+            when KnottyPair:D { $pair }
+            when .defined { $pair.key =x> $pair.value }
+            default { KnottyPair }
+        };
+
+        my $pos = $p.defined ?? @!array[$offset + 1 .. @!array.end].first-index(want($p.key)) !! Nil;
+        @repl.push($pos ~~ Int ?? KnottyPair !! $p);
     }
 
     # Splice the array
@@ -286,9 +292,9 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     }
 
     # Nullify earlier values that have just been replaced
-    for @!array[0 .. $offset].kv -> $i, $p {
+    for @!array[0 .. $offset - 1].kv -> $i, $p {
         @!array[$i] :delete 
-            if @repl.grep(want($p.key));
+            if $p.defined && @repl.first(want($p.key)).defined;
     }
 
     # Return the removed elements
@@ -342,7 +348,7 @@ method permutations() {
 }
 
 multi method perl() returns Str:D {
-    'array-hash(' ~ @!array».perl.join(', ') ~ ')'
+    'array-hash(' ~ @!array.map({ .defined ?? .perl !! 'KnottyPair' }).join(', ') ~ ')'
 }
 
 multi method gist() returns Str:D {
