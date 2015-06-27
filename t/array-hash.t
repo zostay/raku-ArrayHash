@@ -246,9 +246,9 @@ my %tests =
         is %hash<d>, 11, 'hash d added';
         is %hash<e>, 12, 'hash e added';
 
-        my $blanks = 1;
+        my $blanks = 2;
         my %remains = d => 11, e => 12;
-        for 0 .. 2 -> $i {
+        for 0 .. 3 -> $i {
             my $p = @array[$i];
             if !$p.defined {
                 ok $blanks-- > 0, 'blank added';
@@ -259,8 +259,6 @@ my %tests =
             }
         }
 
-        diag @array.perl;
-
         is @array[.[0] + 4].key, 'a', 'array 0 + 2 key same';
         is @array[.[0] + 4].value, 1, 'array 0 + 2 value same';
         is @array[.[1] + 4].key, 'b', 'array 1 + 2 key same';
@@ -268,8 +266,64 @@ my %tests =
         is @array[.[2] + 4].key, 'c', 'array 2 + 2 key same';
         is @array[.[2] + 4].value, 3, 'array 2 + 2 value same';
     },
-    # '22-splice-insert' => {
-    # },
+    '22-splice-insert' => {
+        @array.splice: 2, 0, d => 11, 'e' =x> 12, b => 13, 'c' =x> 14;
+
+        my @orig = (.[0], .[1], .[2]).map({
+            when * >= 2 { $_ + 4 }
+            default     { $_ }
+        });
+
+        is %hash<a>, 1, 'hash a same';
+        if (@orig[1] >= 2) {
+            is %hash<b>, $b, 'hash b same';
+        }
+        else {
+            is %hash<b>, 13, 'hash b changed';
+        }
+        if (@orig[2] >= 2) {
+            is %hash<c>, 3, 'hash c same';
+        }
+        else {
+            is %hash<c>, 14, 'hash c changed';
+        }
+        is %hash<d>, 11, 'hash d added';
+        is %hash<e>, 12, 'hash e added';
+
+        my $blanks = 1;
+        my %remains = d => 11, e => 12;
+        %remains<b> = 13 if @orig[1] < 2;
+        %remains<c> = 14 if @orig[2] < 2;
+        for 2 .. 4 -> $i {
+            my $p = @array[$i];
+            if !$p.defined {
+                ok $blanks-- > 0, 'blank added';
+            }
+            else {
+                my $v = %remains{ $p.key } :delete;
+                is $v, $p.value, 'got an expected value';
+            }
+        }
+
+        given @orig { 
+            is @array[.[0]].key, 'a', 'array 0 key same';
+            is @array[.[0]].value, 1, 'array 0 value same';
+            if (.[1] >= 2) {
+                is @array[.[1]].key, 'b', 'array 1 key same';
+                is @array[.[1]].value, $b, 'array 1 value same';
+            }
+            else {
+                is @array[.[1]], KnottyPair, 'array 1 nullified';
+            }
+            if (.[2] >= 2) {
+                is @array[.[2]].key, 'c', 'array 2 key same';
+                is @array[.[2]].value, 3, 'array 2 value same';
+            }
+            else {
+                is @array[.[2]], KnottyPair, 'array 2 nullified';
+            }
+        }
+    },
     # '23-splice-delete' => {
     # },
     # '24-splice-replace' => {
