@@ -19,15 +19,9 @@ before_install:
 install:
     # must do *something* in the install phase
     - rakudobrew build-panda
-    - cpanm JSON
 script:
-    - mkdir -p ~/.rakudobrew/moar-nom/install/share/perl6/site/panda
     # curl the project.json because panda has trouble doing this itself
     - curl -D- -o ~/projects.json 'http://ecosystem-api.p6c.org/projects.json'
-    - ls -l ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
-    - json_pp < ~/projects.json > ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
-    - perl6 -MJSON::Tiny -e 'from-json("%*ENV<HOME>/projects.json".IO.slurp).perl.say'
-    - perl6 -MJSON::Tiny -e 'from-json("%*ENV<HOME>/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json".IO.slurp).perl.say'
     # Pull in the dependencies before running tests
     - panda installdeps .
     # tests that module passes tests *before* compile
