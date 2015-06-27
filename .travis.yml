@@ -14,8 +14,8 @@ before_install:
     - source ~/travis-perl-helpers/init
     - git clone https://github.com/tadzik/rakudobrew ~/.rakudobrew
     - export PATH=~/.rakudobrew/bin:$PATH
-    # - rakudobrew build $BACKEND
-    # - perl6 -v
+    - rakudobrew build $BACKEND
+    - perl6 -v
 install:
     # must do *something* in the install phase
     # - rakudobrew build-panda
