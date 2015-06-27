@@ -21,6 +21,7 @@ install:
     # - rakudobrew build-panda
     - cpanm JSON
 script:
+    - mkdir -p ~/.rakudobrew/moar-nom/install/share/perl6/site/panda
     # curl the project.json because panda has trouble doing this itself
     - curl -D- -o ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json 'http://ecosystem-api.p6c.org/projects.json'
     - ls -l ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
