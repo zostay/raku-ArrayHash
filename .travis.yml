@@ -18,20 +18,19 @@ before_install:
     - perl6 -v
 install:
     # must do *something* in the install phase
-    # - rakudobrew build-panda
+    - rakudobrew build-panda
     - cpanm JSON
 script:
     - mkdir -p ~/.rakudobrew/moar-nom/install/share/perl6/site/panda
     # curl the project.json because panda has trouble doing this itself
-    - curl -D- -o ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json 'http://ecosystem-api.p6c.org/projects.json'
+    - curl -D- -o ~/projects.json 'http://ecosystem-api.p6c.org/projects.json'
     - ls -l ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
-    - json_pp < ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
-    - perl6 -e '"%*ENV<HOME>/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json".IO.slurp.encode.bytes.say'
-    # # Pull in the dependencies before running tests
-    # - panda installdeps .
-    # # tests that module passes tests *before* compile
-    # - prove -v -s -j$(test-jobs) -e "perl6 --ll-exception -Ilib" $(test-files)
-    # # runs tests again, but catches some heisenbugs (mostly with precompiled modules)
-    # - PANDA_SUBMIT_TESTREPORTS=1 panda install .
+    - json_pp < ~/projects.json > ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
+    # Pull in the dependencies before running tests
+    - panda installdeps .
+    # tests that module passes tests *before* compile
+    - prove -v -s -j$(test-jobs) -e "perl6 --ll-exception -Ilib" $(test-files)
+    # runs tests again, but catches some heisenbugs (mostly with precompiled modules)
+    - PANDA_SUBMIT_TESTREPORTS=1 panda install .
 after_success:
-    # - panda list --installed --verbose
+    - panda list --installed --verbose
