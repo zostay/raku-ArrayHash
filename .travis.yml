@@ -1,5 +1,4 @@
 language: perl
-sudo: false
 perl:
     - '5.20'
 env:
@@ -26,7 +25,7 @@ script:
     # curl the project.json because panda has trouble doing this itself
     - curl -D- -o ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json 'http://ecosystem-api.p6c.org/projects.json'
     - ls -l ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
-    - cat ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
+    - json_pp < ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
     # # Pull in the dependencies before running tests
     # - panda installdeps .
     # # tests that module passes tests *before* compile
