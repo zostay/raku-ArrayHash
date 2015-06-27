@@ -26,7 +26,7 @@ script:
     - curl -D- -o ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json 'http://ecosystem-api.p6c.org/projects.json'
     - ls -l ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
     - json_pp < ~/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json
-    - perl6 -e '"$*ENV<HOME>/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json".IO.slurp.encode.bytes.say'
+    - perl6 -e '"%*ENV<HOME>/.rakudobrew/moar-nom/install/share/perl6/site/panda/projects.json".IO.slurp.encode.bytes.say'
     # # Pull in the dependencies before running tests
     # - panda installdeps .
     # # tests that module passes tests *before* compile
