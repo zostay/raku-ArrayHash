@@ -279,7 +279,7 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
             default { KnottyPair }
         };
 
-        my $pos = $p.defined ?? @!array[$offset .. @!array.end].first-index(want($p.key)) !! Nil;
+        my $pos = $p.defined ?? @!array[$offset + $size .. @!array.end].first-index(want($p.key)) !! Nil;
         @repl.push($pos ~~ Int ?? KnottyPair !! $p);
     }
 

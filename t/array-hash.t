@@ -294,7 +294,7 @@ my %tests =
         my %remains = d => 11, e => 12;
         %remains<b> = 13 if @orig[1] < 2;
         %remains<c> = 14 if @orig[2] < 2;
-        for 2 .. 4 -> $i {
+        for 2 .. 5 -> $i {
             my $p = @array[$i];
             if !$p.defined {
                 ok $blanks-- > 0, 'blank added';
@@ -324,9 +324,66 @@ my %tests =
             }
         }
     },
-    # '23-splice-delete' => {
-    # },
-    # '24-splice-replace' => {
+    '23-splice-replace' => {
+        @array.splice: 1, 1, d => 11, 'e' =x> 12, b => 13, 'c' =x> 14;
+
+        my @orig = (.[0], .[1], .[2]).map({
+            when * == 1 { Nil }
+            when * >= 2 { $_ + 3 }
+            default     { $_ }
+        });
+
+        is %hash<a>, 1, 'hash a same';
+        given @orig[1] {
+            when ! .defined { is %hash<b>, 13, 'hash b changed' }
+            when * >= 2     { is %hash<b>, $b, 'hash b same' }
+            default         { is %hash<b>, 13, 'hash b changed' }
+        }
+        given @orig[2] {
+            when ! .defined { is %hash<c>, 14, 'hash c changed' }
+            when * >= 2     { is %hash<c>, 3, 'hash c same' }
+            default         { is %hash<c>, 14, 'hash c changed' }
+        }
+        is %hash<d>, 11, 'hash d added';
+        is %hash<e>, 12, 'hash e added';
+
+        my $blanks = 1;
+        my %remains = d => 11, e => 12;
+        %remains<b> = 13 if !@orig[1].defined || @orig[1] < 2;
+        %remains<c> = 14 if !@orig[2].defined || @orig[2] < 2;
+        for 1 .. 4 -> $i {
+            my $p = @array[$i];
+            if !$p.defined {
+                ok $blanks-- > 0, 'blank added';
+            }
+            else {
+                my $v = %remains{ $p.key } :delete;
+                is $v, $p.value, 'got an expected value';
+            }
+        }
+
+        given @orig { 
+            if .[0].defined {
+                is @array[.[0]].key, 'a', 'array 0 key same';
+                is @array[.[0]].value, 1, 'array 0 value same';
+            }
+            if .[1].defined {
+                if .[1] == 0 {
+                    is @array[.[1]], KnottyPair, 'array 1 nullified';
+                }
+                else {
+                    is @array[.[1]].key, 'b', 'array 1 key same';
+                    is @array[.[1]].value, $b, 'array 1 value same';
+                }
+            }
+            if .[2].defined {
+                is @array[.[2]].key, 'c', 'array 2 key same';
+                is @array[.[2]].value, 3, 'array 2 value same';
+            }
+        }
+
+    },
+    # '24-splice-delete' => {
     # },
 ;
 
