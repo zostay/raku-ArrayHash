@@ -304,7 +304,7 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     }
 
     # Return the removed elements
-    return ArrayHash.new(|@ret);
+    return ArrayHash.new(:$!multivalued).push(|@ret);
 }
 
 method sort(ArrayHash:D: $by = &infix:<cmp>) returns ArrayHash:D {
@@ -374,11 +374,11 @@ method fmt($format = "%s\t%s", $sep = "\n") returns Str:D {
 }
 
 method reverse(ArrayHash:D:) returns ArrayHash:D {
-    ArrayHash.new(|@!array.reverse)
+    ArrayHash.new(:$!multivalued).push(|@!array.reverse)
 }
 
 method rotate(ArrayHash:D: Int $n) {
-    ArrayHash.new(|@!array.rotate($n))
+    ArrayHash.new(;$!multivalued).push(|@!array.rotate($n))
 }
 
 # my role TypedArrayHash[::TValue] does Associative[TValue] does Positional[Pair] {
@@ -407,4 +407,5 @@ method rotate(ArrayHash:D: Int $n) {
 #     }
 # }
 
-sub array-hash(*@a, *%h) is export { ArrayHash.new(|@a, |%h) }
+our sub array-hash(*@a, *%h) is export { ArrayHash.new(|@a, |%h) }
+our sub multi-hash(*@a, *%h) is export { ArrayHash.new(:multivalued).push(|@a, |%h) }
