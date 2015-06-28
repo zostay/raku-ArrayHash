@@ -333,7 +333,10 @@ my %tests =
             default     { $_ }
         });
 
-        is %hash<a>, 1, 'hash a same';
+        given @orig[0] {
+            when ! .defined { ok %hash<a> :!exists, 'hash a deleted' }
+            default         { is %hash<a>, 1, 'hash a same' }
+        }
         given @orig[1] {
             when ! .defined { is %hash<b>, 13, 'hash b changed' }
             when * >= 2     { is %hash<b>, $b, 'hash b same' }
@@ -383,8 +386,38 @@ my %tests =
         }
 
     },
-    # '24-splice-delete' => {
-    # },
+    '24-splice-delete' => {
+        @array.splice: 1, 1;
+
+        my @orig = (.[0], .[1], .[2]).map({
+            when 0 { 0 }
+            when 1 { Nil }
+            when 2 { 1 }
+        });
+
+        given @orig {
+            if ! .[0].defined { ok %hash<a> :!exists, 'hash a deleted' }
+            else { 
+                is %hash<a>, 1, 'hash a is same'; 
+                is @array[.[0]].key, 'a', 'array 0 key same';
+                is @array[.[0]].value, 1, 'array 0 value same';
+            }
+
+            if ! .[1].defined { ok %hash<b> :!exists, 'hash b deleted' }
+            else { 
+                is %hash<b>, $b, 'hash b is same';
+                is @array[.[1]].key, 'b', 'array 1 key same';
+                is @array[.[1]].value, $b, 'array 1 value same';
+            }
+
+            if ! .[2].defined { ok %hash<c> :!exists, 'hash c deleted' }
+            else { 
+                is %hash<c>, 3, 'hash c is same';
+                is @array[.[2]].key, 'c', 'array 2 key same';
+                is @array[.[2]].value, 3, 'array 2 value same';
+            }
+        }
+    },
 ;
 
 for %tests.kv -> $desc, &test {

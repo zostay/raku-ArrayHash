@@ -286,6 +286,12 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     # Splice the array
     my @ret = @!array.splice($offset, $size, @repl);
 
+    # Delete the removed keys
+    for @ret -> $p {
+        %!hash{ $p.key } :delete
+            if !$!multivalued || !@!array.first(want($p.key));
+    }
+
     # Replace hash elements with new values
     for @repl -> $p {
         %!hash{ $p.key } := $p.value if $p.defined;
