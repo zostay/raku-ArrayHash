@@ -105,7 +105,7 @@ my %tests =
         }
         else {
             @array[0] = 'b' =x> 9;
-            is %hash<b>, 2, 'hash b is unchanged';
+            is %hash<b>, $b, 'hash b is unchanged';
             is @array[0], KnottyPair:U, 'array 0 nullified';
         }
     },
@@ -130,10 +130,10 @@ my %tests =
     '13-bind-key' => {
         %hash<a> := $b;
         $b = 10;
-        is %hash<a>, 10, 'hash a changed';
-        is %hash<b>, 10, 'hash b changed too';
-        is @array[.[0]].value, 10, 'array 0 value changed';
-        is @array[.[1]].value, 10, 'array 1 value changed';
+        is %hash<a>, $b, 'hash a changed';
+        is %hash<b>, $b, 'hash b changed too';
+        is @array[.[0]].value, $b, 'array 0 value changed';
+        is @array[.[1]].value, $b, 'array 1 value changed';
     },
     '14-exists-key' => {
         ok %hash<a> :exists, 'yep a exists';
@@ -208,8 +208,6 @@ my %tests =
                 is $v, $p.value, 'got an expected value';
             }
         }
-
-        diag @array.perl;
 
         is @array[.[0] + 3].key, 'a', 'array 0 + 2 key same';
         is @array[.[0] + 3].value, 1, 'array 0 + 2 value same';
