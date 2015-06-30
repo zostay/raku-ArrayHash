@@ -17,19 +17,79 @@ our sub infix:«=X>» ($key, $value is rw) is export {
 
 =NAME ArrayHash - a data structure that is both Array and Hash
 
+=begin SYNOPSIS
+
+    use ArrayHash;
+
+    my @array := array-hash('a' =x> 1, 'b' => 2);
+    my %hash := @array;
+
+    @array[0].say; #> "a" =x> 1
+    %hash<b> = 3;
+    @array[1].say; #> "b" =x> 3;
+
+    # The order of the keys is preserved
+    for %hash.kv -> $k, $v { 
+        say "$k: $v";
+    }
+
+    # Note, the special ip operation, here is a significant interface
+    # difference from a usual array, .kv is always a key-value alternation,
+    # there's also an .ikv:
+    for @array.ip -> $i, $p {
+        say "$p.key: $p.value is #$i";
+    }
+
+=end SYNOPSIS
+
 =begin DESCRIPTION
 
 B<Experimental:> The API here is experimental. Some important aspects of the API may change without warning.
 
-You can think of this as a L<Hash> that always iterates in insertion order or you can think of this as an L<Array> of L<Pair>s with fast lookups on tha values. Both are correct. Though, this class uses L<KnottyPair> internally, rather than plain old Pairs.
+You can think of this as a L<Hash> that always iterates in insertion order or you can think of this as an L<Array> of L<Pair>s with fast lookups by key. Both are correct, though it really is more hashish than arrayish because of the Pairs, which is why it's an ArrayHash and not a HashArray. 
 
-There is some amount of conflicting tension between a L<Positional> and L<Assocative> data structure. That is, an Associative object in Perl requires unique keys while a Positional containing a list of Pairs has no such restriction. This tension is resolved by two factors:
+This class uses L<KnottyPair> internally, rather than plain old Pairs, but you can usually use either when interacting with objects of this class.
 
-=item The way you this object is used will determine how that tension is resolved.
+An ArrayHash is both Associative and Positional. This means you can use either a C<@> sigil or a C<%> sigil safely. However, there is some amount of conflicting tension between a L<Positional> and L<Assocative> data structure. An Associative object in Perl requires unique keys and has no set order. A Positional, on the othe rhand, is a set order, but no inherent uniqueness invariant. The primary way this tension is resolved depends on whether the operations you are performing are hashish or arrayish.
 
-=item There are settings to resolve any additional nuances.
+For example, consider this C<push> operation:
 
-For example, if you add 3 pairs in a row, each with the same key, the hash will always have the value of the pair inserted with teh greatest index. The array, then, will either contain each of those three pairs as duplicates or replace earlier pairs with a type object to mark them as undefined (depending on the L<#has $.multivalued> attribute).
+    my @a := array-hash('a' =x> 1, 'b' =x> 2);
+    @a.push: 'a' =x> 3, b => 4;
+    @a.perl.say;
+    #> array-hash(KnottyPair, "b" =x> 4, "a" =x> 3);
+
+Here, the C<push> is definitely an arrayish operation, but it is given both an arrayish argument, C<<'a' =x> 3>>, and a hashish argument C<<b => 4>>. Therefore, the L<KnottyPair> keyed with C<"a"> is pushed onto the end of the ArrayHash and the earlier value is nullified. The L<Pair> keyed with C<"b"> performs a more hash-like operation and replaces the value on the existing pair.
+
+Now, compare this to a similar C<unshit> operation:
+
+    my @a := array-hash('a' =x> 1, 'b' =x> 2);
+    @a.unshift: 'a' =x> 3, b => 4;
+    @a.perl.say;
+    #> array-hash(KnottyPair, 'a' =x> 1, 'b' =x> 2);
+
+What happened? Why didn't the values changed and where did this extra L<KnottyPair> come from? Again, C<unshift> is arrayish and we have an arrayish and a hashish argument, but this time we demonstrate another normal principle of Perl hashes that is enforced, which is, when dealing with a list of L<Pair>s, the latest Pair is the one that bequeaths its value to the hash. That is,
+
+    my %h = a => 1, a => 2;
+    say "a = %h<a>";
+    #> a = 2
+
+Since an L<ArrayHash> maintains its order, this rule always applies. A value added near the end will win over a value at the beginning. Adding a value near the beginning will lose to a value nearer the end.
+
+So, returning to the C<unshift> example above, the arrayish value with key C<"a"> gets unshifted to the front of the array, but immediately nullified because of the later value. The hashish value with key C<"b"> sees an existing value for the same key and the existing value wins since it would come after it. 
+
+The same rule holds for all operations: If the key already exists, but before the position the value is being added, the new value wins. If the key already exists, but after the position we are inserting, the old value wins.
+
+For a regular ArrayHash, the losing value will either be replaced, if the operation is hashish, or will be nullified, if the operation is arrayish. 
+
+This might not always be the desired behavior so this module also provides the multivalued ArrayHash, or multi-hash:
+
+    my @a := multi-hash('a' =x> 1, 'b' =x> 2);
+    @a.push: 'a' =x> 3, b => 4;
+    @a.perl.say;
+    #> multi-hash('a' =x> 1, "b" =x> 4, "a" =x> 3);
+
+The operations all work the same, but array values are not nullified and it is find for there to be multiple values in the array. This is the same class, ArrayHash, but the L<has $.multivalued> property is set to true.
 
 [Conjecture: Consider adding a C<has $.collapse> attribute or some such to govern whether a replaced value in a C<$.multivalued> array hash is replaced with a type object or spiced out. Or perhaps change the C<$.multivalued> into an enum of operational modes.]
 
@@ -44,12 +104,34 @@ has KnottyPair @!array handles <
     pick roll reduce combinations
 >;
 
+=begin pod
+
+=head1 Attributes
+
+=head2 has $.multivalued
+
+    has $.multivalued = False;
+
+This determines whether the ArrayHash is a regular array-hash or a multi-hash. Usually, you will use the L<sub array-hash> or L<sub multi-hash> constructors rather than setting this directly.
+
+=end pod
+
 has Bool $.multivalued = False;
 
 # TODO make this a macro...
 sub want($key) {
     & = { .defined && .key eqv $key }
 }
+
+=begin pod
+
+=head2 method new
+
+    method new(Bool :multivalued = False, *@a, *%h) returns ArrayHash:D
+
+Constructs a new ArrayHash. This is not the preferred method of construction. You should use L<sub array-hash> or L<sub multi-hash> instead.
+
+=end pod
 
 method new(Bool :$multivalued = False, *@a, *%h)  {
     my $self = self.bless(:$multivalued);
@@ -58,6 +140,16 @@ method new(Bool :$multivalued = False, *@a, *%h)  {
 }
 
 submethod BUILD(:$!multivalued) { self }
+
+=begin pod
+
+=head2 method of
+
+    method of() returns Mu:U
+
+Returns what type of values are stored. This always returns a L<KnottyPair> type object.
+
+=end pod
 
 method of() {
     self.Positional::of();
@@ -78,9 +170,29 @@ method !found-after($pos, $key) returns Bool {
     @!array[$pos + 1 .. @!array.end].first-index(want($key)) ~~ Int
 }
 
+=begin pod
+
+=head2 method postcircumfix:<{ }>
+
+    method postcircumfix:<( )>(ArrayHash:D: $key) returns Mu
+
+This provides the usual value lookup by key. You can use this to retrieve a value, assign a value, or bind a value. You may also combine this with the hash adverbs C<:delete> and C<:exists>.
+
+=end pod
+
 method AT-KEY(ArrayHash:D: $key) { 
     %!hash{$key} 
 }
+
+=begin pod
+
+=head2 method postcircumfix:<[ ]>
+
+    method postcircumfix:<[ ]>(ArrayHash:D: Int:D $pos) returns KnottyPair
+
+This returns the value lookup by index. You can use this to retrieve the pair at the given index or assign a new pair or even bind a pair. It may be combined with the array adverts C<:delete> and C<:exists> as well.
+
+=end pod
 
 method AT-POS(ArrayHash:D: $pos) returns KnottyPair {
     @!array[$pos];
