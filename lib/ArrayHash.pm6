@@ -111,6 +111,8 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
         %!hash{ @!array[$pos].key } :delete;
     }
 
+    my $orig = @!array[ $pos ];
+
     if self!found-after($pos, $pair.key) {
         if $!multivalued {
             @!array[ $pos ] = $pair;
@@ -123,6 +125,15 @@ method ASSIGN-POS(ArrayHash:D: $pos, KnottyPair:D $pair is copy) {
         %!hash{ $pair.key } := $pair.value;
         @!array[ $pos ]      = $pair;
     }
+
+    if $!multivalued && $orig.defined {
+        my $npos = @!array.last-index(want($orig.key));
+        if $npos ~~ Int {
+            %!hash{ $orig.key } := @!array[$npos].value;
+        }
+    }
+
+    $pair;
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw { 
@@ -219,13 +230,14 @@ method push(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
 }
 
 method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
-    for @values -> $p {
+    for @values.kv -> $i, $p {
         if !$!multivalued and %!hash{ $p.key } :exists {
             @!array.unshift: KnottyPair;
         }
         else {
             @!array.unshift: $p;
-            %!hash{ $p.key } := $p.value;
+            %!hash{ $p.key } := $p.value
+                unless self!found-after($i, $p.key);
         }
     }
 
@@ -304,7 +316,7 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     # Replace hash elements with new values
     for @repl -> $p {
         %!hash{ $p.key } := $p.value 
-            if $p.defined && !self!found-after($offset + $size, $p.key);
+            if $p.defined && !self!found-after($offset + @repl.elems - 1, $p.key);
     }
 
     # Nullify earlier values that have just been replaced
@@ -366,11 +378,13 @@ method permutations() {
 }
 
 multi method perl() returns Str:D {
-    'array-hash(' ~ @!array.map({ .defined ?? .perl !! 'KnottyPair' }).join(', ') ~ ')'
+    my $type = $!multivalued ?? 'multi-hash' !! 'array-hash';
+    $type ~ '(' ~ @!array.map({ .defined ?? .perl !! 'KnottyPair' }).join(', ') ~ ')'
 }
 
 multi method gist() returns Str:D {
-    'array-hash(' ~ do for @!array -> $elem { 
+    my $type = $!multivalued ?? 'multi-hash' !! 'array-hash';
+    $type ~ '(' ~ do for @!array -> $elem { 
         given ++$ {
             when 101 { '...' }
             when 102 { last }
