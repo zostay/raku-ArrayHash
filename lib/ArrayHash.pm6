@@ -106,13 +106,13 @@ has KnottyPair @!array handles <
 
 =begin pod
 
-=head1 Attributes
+=head1 Methods
 
-=head2 has $.multivalued
+=head2 method multivalued
 
-    has $.multivalued = False;
+    method multivalued() returns Bool:D
 
-This determines whether the ArrayHash is a regular array-hash or a multi-hash. Usually, you will use the L<sub array-hash> or L<sub multi-hash> constructors rather than setting this directly.
+This setting determines whether the ArrayHash is a regular array-hash or a multi-hash. Usually, you will use the L<sub array-hash> or L<sub multi-hash> constructors rather than setting this directly on the constructor.
 
 =end pod
 
@@ -335,11 +335,51 @@ method DELETE-POS(ArrayHash:D: $pos) returns KnottyPair {
     $pair;
 }
 
+=begin pod
+
+=head2 method push
+
+    method push(ArrayHash:D: *@values, *%values) returns ArrayHash:D
+
+Adds the given values onto the end of the ArrayHash. These values will replace any existing values with matching keys. If the values pushed are L<Pair>s (hashish interface), then the existing values are replaced. If the values are L<KnottyPair>s (arrayish interface), then new values are added to the end of the ArrayHash.
+
+    my @a := array-hash('a' =x> 1, 'b' =x> 2);
+    @a.push: 'a' =x> 3, b => 4, 'c' =x> 5;
+    @a.perl.say; 
+    #> array-hash(KnottyPair, "b" =x> 4, "a" =x> 3, "c" =x> 5);
+
+    my @m := multi-hash('a' =x> 1, 'b' =x> 2);
+    @m.push: 'a' =x> 3, b => 4, 'c' =x> 5;
+    @m.perl.say; 
+    #> multi-hash("a" =x> 1, "b" =x> 4, "a" =x> 3, "c" =x> 5);
+
+=end pod
+
 method push(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
     for @values    -> $p     { self.ASSIGN-POS(@!array.elems, $p) }
     for %values.kv -> $k, $v { self.ASSIGN-KEY($k, $v) }
     self
 }
+
+=begin pod
+
+=head2 method unshift
+
+    method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D
+
+Adds the given values onto the front of the ArrayHash. These values will never replace any existing values in the data structure. If the values are passed as L<KnottyPair>s, these pairs will be put onto the front of the data structure without changing the primary keyed value. These insertions will be nullified if the hash is not multivalued.
+
+    my @a := array-hash('a' =x> 1, 'b' =x> 2);
+    @a.unshift 'a' =x> 3, b => 4, 'c' =x> 5;
+    @a.perl.say; 
+    #> array-hash(KnottyPair, "c" =x> 5, "a" =x> 1, "b" =x> 2);
+
+    my @m := multi-hash('a' =x> 1, 'b' =x> 2);
+    @m.push: 'a' =x> 3, b => 4, 'c' =x> 5;
+    @m.perl.say; 
+    #> multi-hash("a" =x> 3, "c" =x> 5, "a" =x> 1, "b" =x> 2);
+
+=end pod
 
 method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
     for @values.kv -> $i, $p {
@@ -366,20 +406,63 @@ method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
     self
 }
 
-multi method splice(&offset, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
+=begin pod
+
+=head2 method splice
+
+    multi method splice(ArrayHash:D: &offset, Int(Cool) $size? *@values, *%values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: Int(Cool) $offset, &size, *@values, *%values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: &offset, &size, *@values, *%values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D
+
+This is a general purpose splice method for ArrayHash. As with L<Array> splice, it is able to perform most modification operations.
+
+    my KnottyPair $p;
+    my @a := array-hash( ... );
+
+    @a.splice: *, 0, "a" =x> 1;  # push
+    $p = @a.splice: *, 1;        # pop
+    @a.splice: 0, 0, "a" =x> 1;  # unshift
+    $p = @a.splice: *, 1;        # shift
+    @a.splice: 3, 1, "a" =x> 1;  # assignment
+    @a.splice: 4, 1, "a" =X> $a; # binding
+    @a.splice: 5, 1, KnottyPair; # deletion
+
+    # And some operations that are uniqe to splice
+    @a.splice: 1, 3;             # delete and squash
+    @a.splice: 3, 0, "a" =x> 1;  # insertion
+
+    # And the no-op, the $offset could be anything legal
+    @a.splice: 4, 0;
+
+The C<$offset> is a point in the ArrayHash to perform the work. It is not an index, but a boundary between indexes. The 0th offset is just before index 0, the 1st offset is after index 0 and before index 1, etc.
+
+The C<$size> determines how many elements after C<$offset> will be removed. These are returned as a new ArrayHash.
+
+The C<%values> and C<@values> are a list of new values to insert. If empty, no new values are inserted. The number of elements inserted need not have any relationship to the number of items removed.
+
+This method will fail with an L<X::OutOfRange> exception if the C<$offset> or C<$size> is out of range.
+
+B<Caveat:> It should be clarified that splice does not perform precisely the same sort of operation its named equivalent would. Unlike L<#method push> or L<#method unshift>, all arguments are treated as arrayish. This is because a splice is very specific about what parts of the data structure are being manipulated.
+
+[Conjecture: Is the caveat correct or should L<Pair>s be treated as hashish instead anyway?]
+
+=end pod
+
+multi method splice(ArrayHash:D: &offset, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
     callsame(offset(self.elems), $size, |@values, |%values)
 }
 
-multi method splice(Int(Cool) $offset, &size, *@values, *%values) returns ArrayHash:D {
+multi method splice(ArrayHash:D: Int(Cool) $offset, &size, *@values, *%values) returns ArrayHash:D {
     callsame($offset, size(self.elems - $offset), |@values, |%values)
 }
 
-multi method splice(&offset, &size, *@values, *%values) returns ArrayHash:D {
+multi method splice(ArrayHash:D: &offset, &size, *@values, *%values) returns ArrayHash:D {
     my $o = offset(self.elems);
     callsame($o, size(self.elems - $o), |@values, |%values)
 }
 
-multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
+multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
     $size //= self.elems - ($offset min self.elems);
 
     unless 0 <= $offset <= self.elems {
@@ -443,22 +526,88 @@ multi method splice(Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values)
     return ArrayHash.new(:$!multivalued).push(|@ret);
 }
 
+=begin pod
+
+=head2 method sort
+
+    method sort(ArrayHash:D: 5by = &infix:<cmp>) returns ArrayHash:D
+
+This is not yet implemented.
+
+=end pod
+
 method sort(ArrayHash:D: $by = &infix:<cmp>) returns ArrayHash:D {
     die "not yet implemented";    
 }
 
-# Duh... we are always already unique... though, this not completely implemented
-# yet.
-method unique(ArrayHash:D:) returns ArrayHash:D { self }
-method squish(ArrayHash:D:) returns ArrayHash:D { self }
+=begin pod
+
+=head2 method unique
+
+    method unique(ArrayHash:D:) returns ArrayHash:D
+
+For a multivalued hash, this returns the same hash as a non-multivalued hash. Otherwise, it returns itself.    
+
+=end pod
+
+method unique(ArrayHash:D:) returns ArrayHash:D { 
+    if $!multivalued {
+        array-hash(self.pairs)
+    }
+    else {
+        self 
+    }
+}
+
+=begin pod
+
+=head2 method squish
+
+    method squish(ArrayHash:D:) returns ArrayHash:D
+
+This is not yet implemented.
+
+=end pod
+
+method squish(ArrayHash:D:) returns ArrayHash:D {
+    die "not yet implemented";
+}
+
+=begin pod
+
+=head2 method rotor
+
+Not yet implemented.
+
+=end pod
 
 method rotor(ArrayHash:D:) { 
     die "not yet implemented";
 }
 
+=begin pod
+
+=head2 method pop
+
+    method pop(ArrayHash:D:) returns KnottyPair
+
+Takes the last element off the ArrayHash and returns it.
+
+=end pod
+
 method pop(ArrayHash:D:) returns KnottyPair {
     self.DELETE-POS(@!array.end)
 }
+
+=begin pod
+
+=head2 method shift
+
+    method shift(ArrayHash:D:) returns KnottyPair
+
+Takes the first element off the ArrayHash and returns it.
+
+=end pod
 
 method shift(ArrayHash:D) returns KnottyPair {
     my $head;
@@ -466,6 +615,52 @@ method shift(ArrayHash:D) returns KnottyPair {
         andthen %!hash{ $head.key } :delete;
     return $head;
 }
+
+=begin pod
+
+=head2 method values
+
+    method values() returns List:D
+
+Returns all the values of the stored pairs in insertion order.
+
+=head2 method keys
+
+    method keys() returns List:D
+
+Returns all the keys of the stored pairs in insertion order.
+
+=head2 method indexes
+
+    method index() returns List:D
+
+This returns the indexes of the ArrayHash, similar to what would be returned by L<Array#method keys>.
+
+=head2 method kv
+
+    method kv() returns List:D
+
+This returns an alternating list of key/value pairs. The list is always returned in insertion order.
+
+=head2 method ip
+
+    method ip() returns List:D
+
+This returns an alternating list of index/pair pairs. This is similar to what would be returned by L<Array#method kv> storing L<Pair>s.
+
+=head2 method ikv
+
+    method ikv() returns List:D
+
+This returns an alternating list of index/key/value tuples. This list is always returne d in insertion order.
+
+=head2 method pairs
+
+    method pairs() returns List:D
+
+This returns a list of pairs stored in the ArrayHash.
+
+=end pod
 
 method values() returns List:D { @!array».value.list }
 method keys() returns List:D { @!array».key.list }
@@ -476,6 +671,26 @@ method ikv() returns List:D {
     @!array.kv.flatmap({ .defined && KnottyPair ?? .kv !! $_ })
 }
 method pairs() returns List:D { @!array }
+
+=begin pod
+
+=head2 method invert
+
+    method invert() returns List:D
+
+Not yet implemented.
+
+=head2 method antipairs
+
+    method antipairs() returns List:D
+
+Not yet implemented.
+
+=head2 method permutations
+
+Not yet implemented.
+
+=end pod
 
 method invert() returns List:D {
     die 'not yet implemented'
@@ -489,12 +704,28 @@ method permutations() {
     die 'not yet implmeneted'
 }
 
-multi method perl() returns Str:D {
+=begin pod
+
+=head2 method perl
+
+    multi method perl(ArrayHash:D:) returns Str:D
+
+Returns the Perl code that could be used to recreate this list.
+
+=head2 method gist
+
+    multi method gist(ArrayHash:D:) returns Str:D
+
+Returns the Perl code that could be used to recreate this list, up to the 100th element.
+
+=end pod
+
+multi method perl(ArrayHash:D:) returns Str:D {
     my $type = $!multivalued ?? 'multi-hash' !! 'array-hash';
     $type ~ '(' ~ @!array.map({ .defined ?? .perl !! 'KnottyPair' }).join(', ') ~ ')'
 }
 
-multi method gist() returns Str:D {
+multi method gist(ArrayHash:D:) returns Str:D {
     my $type = $!multivalued ?? 'multi-hash' !! 'array-hash';
     $type ~ '(' ~ do for @!array -> $elem { 
         given ++$ {
@@ -505,17 +736,47 @@ multi method gist() returns Str:D {
     }.join(', ') ~ ')'
 }
 
+=begin pod
+
+=head2 method fmt
+
+    method fmt($format = "%s\t%s", $sep = "\n") returns Str:D
+
+Prints the contents of the ArrayHash using the given format and separator.
+
+=end pod
+
 method fmt($format = "%s\t%s", $sep = "\n") returns Str:D {
     do for @!array -> $e {
         $e.fmt($format)
     }.join($sep)
 }
 
+=begin pod
+
+=head2 method reverse
+
+    method reverse(ArrayHash:D:) returns ArrayHash:D
+
+Returns the ArrayHash, but with pairs inserted in reverse order.
+
+=end pod
+
 method reverse(ArrayHash:D:) returns ArrayHash:D {
     ArrayHash.new(:$!multivalued).push(|@!array.reverse)
 }
 
-method rotate(ArrayHash:D: Int $n) {
+=begin pod
+
+=head2 method rotate
+
+    method rotate(ArrayHash:D: Int $n = 1) returns ArrayHash:D
+
+Returns the ArrayHash, but with the pairs inserted rotated by C<$n> elements.
+
+=end pod
+
+method rotate(ArrayHash:D: Int $n = 1) returns ArrayHash:D {
     ArrayHash.new(;$!multivalued).push(|@!array.rotate($n))
 }
 
@@ -544,6 +805,22 @@ method rotate(ArrayHash:D: Int $n) {
 #         die "Can only type-constrain ArrayHash with [ValueType] or [ValueType,KeyType]";
 #     }
 # }
+
+=begin pod
+
+=head2 sub array-hash
+
+    sub array-hash(*@a, *%h) returns ArrayHash:D where { !*.multivalued }
+
+Constructs a new ArrayHash with multivalued being false, containing the given initial pairs in the given order (or whichever order Perl picks arbitrarily if passed as L<Pair>s.
+
+=head2 sub multi-hash
+
+    sub multi-hash(*@a, *%h) returns ArrayHash:D where { *.multivalued }
+
+Constructs a new multivalued ArrayHash containing the given initial pairs in the given order. (Again, if you use L<Pair>s to do the initial insertion, the order will be randomized, but stable upon insertion.)
+
+=end pod
 
 our sub array-hash(*@a, *%h) is export { ArrayHash.new(|@a, |%h) }
 our sub multi-hash(*@a, *%h) is export { ArrayHash.new(:multivalued).push(|@a, |%h) }
