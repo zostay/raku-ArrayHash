@@ -8,7 +8,7 @@ SYNOPSIS
 
     use ArrayHash;
 
-    my @array := array-hash('a' =x> 1, 'b' => 2);
+    my @array := array-hash('a' =x> 1, 'b' => 2); # use pairs or knotty pairs
     my %hash := @array;
 
     @array[0].say; #> "a" =x> 1
