@@ -37,14 +37,16 @@ You can think of this as a L<Hash> that always iterates in insertion order or yo
 
 An ArrayHash is both Associative and Positional. This means you can use either a C<@> sigil or a C<%> sigil safely. However, there is some amount of conflicting tension between a L<Positional> and L<Assocative> data structure. An Associative object in Perl requires unique keys and has no set order. A Positional, on the othe rhand, is a set order, but no inherent uniqueness invariant. The primary way this tension is resolved depends on whether the operations you are performing are hashish or arrayish.
 
+By hashish, we mean operations that are either related to Associative objects or operations receiving named arguments. By arrayish, we mean operations that are either related to Positional objects or operations receiving positional arguments. In Perl 6, a Pair may generally be passed either Positionally or as a named argument. A bare name generally implies a named argument, e.g., C<:a(1)> or C<<a => 1>> are named while C<<'a' => 1>> is positional.
+
 For example, consider this C<push> operation:
 
     my @a := array-hash('a' => 1, 'b' => 2);
     @a.push: 'a' => 3, b => 4;
     @a.perl.say;
-    #> array-hash("b" => 4, "a" => 3);
+    #> array-hash(:b(4), :a(3));
 
-Here, the C<push> is definitely an arrayish operation, but it is given both an arrayish argument, C<<'a' => 3>>, and a hashish argument C<<b => 4>>. Therefore, the L<Pair> keyed with C<"a"> is pushed onto the end of the ArrayHash and the earlier value is nullified. The L<Pair> keyed with C<"b"> performs a more hash-like operation and replaces the value on the existing pair.
+Here, the C<push> is an arrayish operation, but it is given both a Pair, C<<'a' => 3>>, and a hashish argument C<<b => 4>>. Therefore, the L<Pair> keyed with C<"a"> is pushed onto the end of the ArrayHash and the earlier value is nullified. The L<Pair> keyed with C<"b"> performs a more hash-like operation and replaces the value on the existing pair.
 
 Now, compare this to a similar C<unshift> operation:
 
@@ -67,18 +69,18 @@ The same rule holds for all operations: If the key already exists, but before th
 
 For a regular ArrayHash, the losing value will either be replaced, if the operation is hashish, or will be nullified, if the operation is arrayish. 
 
-This might not always be the desired behavior so this module also provides the multivalued ArrayHash, or multi-hash:
+This might not always be the desired behavior so this module also provides a multi-valued ArrayHash, or multi-hash interface:
 
     my @a := multi-hash('a' => 1, 'b' => 2);
     @a.push: 'a' => 3, b => 4;
     @a.perl.say;
     #> multi-hash('a' => 1, "b" => 4, "a" => 3);
 
-The operations all work the same, but array values are not nullified and it is find for there to be multiple values in the array. This is the same class, ArrayHash, but the L<has $.multivalued> property is set to true.
+The operations all work the same, but array values are not nullified and it is fine for there to be multiple values in the array. This is the same class, ArrayHash, but the L<has $.multivalued> property is set to true.
 
-[Conjecture: Consider adding a C<has $.collapse> attribute or some such to govern whether a replaced value in a C<$.multivalued> array hash is replaced with a type object or spiced out. Or perhaps change the C<$.multivalued> into an enum of operational modes.]
+[For future consideration: Consider adding a C<has $.collapse> attribute or some such to govern whether a replaced value in a C<$.multivalued> array hash is replaced with a type object or spiced out. Or perhaps change the C<$.multivalued> into an enum of operational modes.]
 
-[Conjecture: In the future, a parameterizable version of this class could be created with some sort of general keyable object trait rather than Pair.]
+[For future consideration: A parameterizable version of this class could be created with some sort of general keyable object trait rather than Pair.]
 
 =end DESCRIPTION
 
@@ -97,7 +99,7 @@ has Pair @!array handles <
 
     method multivalued() returns Bool:D
 
-This setting determines whether the ArrayHash is a regular array-hash or a multi-hash. Usually, you will use the L<sub array-hash> or L<sub multi-hash> constructors rather than setting this directly on the constructor.
+This setting determines whether the ArrayHash is a regular array-hash or a multi-hash. Usually, you will use the L<sub array-hash> or L<sub multi-hash> constructors rather than setting this directly on the C<new> constructor.
 
 =end pod
 
@@ -153,7 +155,7 @@ method !found-after($pos, $key) returns Bool {
 
 =head2 method postcircumfix:<{ }>
 
-    method postcircumfix:<( )>(ArrayHash:D: $key) returns Mu
+    method postcircumfix:<{ }>(ArrayHash:D: $key) returns Mu
 
 This provides the usual value lookup by key. You can use this to retrieve a value, assign a value, or bind a value. You may also combine this with the hash adverbs C<:delete> and C<:exists>.
 
@@ -169,7 +171,7 @@ method AT-KEY(ArrayHash:D: $key) {
 
     method postcircumfix:<[ ]>(ArrayHash:D: Int:D $pos) returns Pair
 
-This returns the value lookup by index. You can use this to retrieve the pair at the given index or assign a new pair or even bind a pair. It may be combined with the array adverts C<:delete> and C<:exists> as well.
+This returns the value lookup by index. You can use this to retrieve the pair at the given index or assign a new pair or even bind a pair. It may be combined with the array adverbs C<:delete> and C<:exists> as well.
 
 =end pod
 
@@ -436,7 +438,7 @@ This method will fail with an L<X::OutOfRange> exception if the C<$offset> or C<
 
 B<Caveat:> It should be clarified that splice does not perform precisely the same sort of operation its named equivalent would. Unlike L<#method push> or L<#method unshift>, all arguments are treated as arrayish. This is because a splice is very specific about what parts of the data structure are being manipulated.
 
-[Conjecture: Is the caveat correct or should L<Pair>s be treated as hashish instead anyway?]
+[For the future: Is the caveat correct or should L<Pair>s be treated as hashish instead anyway?]
 
 =end pod
 
