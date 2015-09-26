@@ -255,30 +255,30 @@ method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw {
     }
 }
 
-method BIND-POS(ArrayHash:D: $pos, Pair:D $pair is rw) {
-    PRE  { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
-    POST { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
-    POST { %!hash{$pair.key} =:= @!array.reverse.first(want($pair.key)).value }
+method BIND-POS(ArrayHash:D: $pos, Pair:D \pair) {
+    PRE  { $!multivalued || @!array.grep(want(pair.key)).elems <= 1 }
+    POST { $!multivalued || @!array.grep(want(pair.key)).elems <= 1 }
+    POST { %!hash{pair.key} =:= @!array.reverse.first(want(pair.key)).value }
 
-    if !$!multivalued && (%!hash{ $pair.key } :exists) {
-        self!clear-before($pos, $pair.key);
+    if !$!multivalued && (%!hash{ pair.key } :exists) {
+        self!clear-before($pos, pair.key);
     }
 
     if @!array[$pos] :exists && @!array[$pos].defined {
         %!hash{ @!array[$pos].key } :delete;
     }
 
-    if self!found-after($pos, $pair.key) {
+    if self!found-after($pos, pair.key) {
         if $!multivalued {
-            @!array[ $pos ] := $pair;
+            @!array[ $pos ] := pair;
         }
         else {
             @!array[ $pos ] := Pair;
         }
     }
     else {
-        %!hash{ $pair.key } := $pair.value;
-        @!array[ $pos ]     := $pair;
+        %!hash{ pair.key } := pair.value;
+        @!array[ $pos ]    := pair;
     }
 }
 
