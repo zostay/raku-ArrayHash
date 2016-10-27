@@ -1,4 +1,5 @@
 {
+    "perl" : "6.*",
     "name" : "ArrayHash",
     "version" : "0.2",
     "description" : "An array in a hash in an array... like a turducken",
