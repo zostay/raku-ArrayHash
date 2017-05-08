@@ -11,5 +11,6 @@
         "ArrayHash": "lib/ArrayHash.pm6"
     },
     "depends" : [ ],
+    "test-depends" : [ "Test", "Test::META" ],
     "source-url" : "git://github.com/zostay/perl6-ArrayHash.git"
 }
