@@ -1,5 +1,6 @@
 {
     "name" : "ArrayHash",
+    "license" : "Artistic-2.0",
     "version" : "0.2",
     "description" : "An array in a hash in an array... like a turducken",
     "authors" : [
