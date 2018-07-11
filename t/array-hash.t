@@ -420,9 +420,9 @@ my %tests =
     },
 ;
 
-for %tests.kv -> $desc, &test {
+for %tests.sort -> (:key($desc), :value(&test)) {
     subtest {
-        for %inits.kv -> $init-desc, &init {
+        for %inits.sort -> (:key($init-desc), :value(&init)) {
             diag "init: $init-desc, test: $desc";
             my $o = init();
             subtest { temp $_ = $o; test() }, $init-desc;
