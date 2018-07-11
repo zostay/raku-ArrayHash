@@ -11,25 +11,25 @@ use ArrayHash;
 my ($b, %hash, @array);
 
 sub make-iter(@o) {
-    class { 
-        method CALL-ME() { @o.shift } 
-        method AT-POS($pos) { @o[$pos] } 
+    class {
+        method CALL-ME() { @o.shift }
+        method AT-POS($pos) { @o[$pos] }
     }
 }
 
-my %inits = 
+my %inits =
     '01-init-hash-then-array' => {
         $b      = 2;
         %hash  := multi-hash('a' => 1, 'b' => $b, 'c' => 3, 'a' => 4);
         @array := %hash;
         make-iter(@ = 0, 1, 2, 3);
-    }, 
+    },
     '02-init-array-then-hash' => {
         $b      = 2;
         @array := multi-hash('a' => 1, 'b' => $b, 'c' => 3, 'a' => 4);
         %hash  := @array;
         make-iter(@ = 0, 1, 2, 3);
-    }, 
+    },
     '03-init-from-pairs' => {
         $b = 2;
         my $init = multi-hash(a => 1, b => $b, c => 3);
@@ -38,7 +38,7 @@ my %inits =
         @array := $init;
         %hash  := $init;
         make-iter($init.values »-» 1);
-    }, 
+    },
     '04-init-from-pairs-and-positionals' => {
         $b = 2;
         my $init = multi-hash('a' => 1, 'b' => $b, c => 3, 'a' => 4);
@@ -48,7 +48,7 @@ my %inits =
     },
 ;
 
-my %tests = 
+my %tests =
     '01-basic' => {
         is %hash<a>, 4, 'hash a';
         is %hash<b>, 2, 'hash b';
@@ -317,7 +317,7 @@ my %tests =
             is $v, $p.value, 'got an expected value';
         }
 
-        given @orig { 
+        given @orig {
             is @array[.[0]].key, 'a', 'array 0 key same';
             is @array[.[0]].value, 1, 'array 0 value same';
             if (.[1] >= 2) {
@@ -369,7 +369,7 @@ my %tests =
             is $v, $p.value, 'got an expected value';
         }
 
-        given @orig { 
+        given @orig {
             if .[0].defined {
                 is @array[.[0]].key, 'a', 'array 0 key same';
                 is @array[.[0]].value, 1, 'array 0 value same';
@@ -401,25 +401,25 @@ my %tests =
         given @orig {
             if ! .[0].defined { is %hash<a>, 4, 'hash a same' }
             elsif ! .[3].defined {
-                is %hash<a>, 1, 'hash a is changed'; 
+                is %hash<a>, 1, 'hash a is changed';
                 is @array[.[0]].key, 'a', 'array 0 key same';
                 is @array[.[0]].value, 1, 'array 0 value same';
             }
-            else { 
-                is %hash<a>, 4, 'hash a is same'; 
+            else {
+                is %hash<a>, 4, 'hash a is same';
                 is @array[.[0]].key, 'a', 'array 0 key same';
                 is @array[.[0]].value, 1, 'array 0 value same';
             }
 
             if ! .[1].defined { ok %hash<b> :!exists, 'hash b deleted' }
-            else { 
+            else {
                 is %hash<b>, $b, 'hash b is same';
                 is @array[.[1]].key, 'b', 'array 1 key same';
                 is @array[.[1]].value, $b, 'array 1 value same';
             }
 
             if ! .[2].defined { ok %hash<c> :!exists, 'hash c deleted' }
-            else { 
+            else {
                 is %hash<c>, 3, 'hash c is same';
                 is @array[.[2]].key, 'c', 'array 2 key same';
                 is @array[.[2]].value, 3, 'array 2 value same';
