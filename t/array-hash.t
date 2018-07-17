@@ -32,6 +32,13 @@ my %inits =
     },
     '03-init-from-pairs' => {
         $b = 2;
+        # TODO Figure out my original intention here and either do that or
+        # delete these init. I believe I meant for this to be:
+        #
+        #     my $init = array-hash(a => 1, :$b, c => 3);
+        #
+        # That causes test fails at the mo', so I'm leaving it like this for
+        # now.
         my $init = array-hash(a => 1, 'b' => $b, c => 3);
         @array := $init;
         %hash  := $init;
