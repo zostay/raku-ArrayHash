@@ -420,7 +420,10 @@ my %tests =
     },
 ;
 
-srand(sprintf("%04d%02d%02d", .year, .month, .day).Int) with Date.today;
+my $rand-seed = %*ENV<TEST_RAND_SEED>;
+$rand-seed //= sprintf("%04d%02d%02d", .year, .month, .day) with Date.today;
+srand($rand-seed.Int);
+
 for %tests.sort.pick(*) -> (:key($desc), :value(&test)) {
     subtest {
         for %inits.sort -> (:key($init-desc), :value(&init)) {
