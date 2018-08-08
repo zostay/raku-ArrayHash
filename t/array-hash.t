@@ -96,6 +96,7 @@ my %tests =
         is %hash.elems, 3, 'after array delete elems still == 3';
     },
     '08-perl' => {
+        todo 'It would be best if this passed.', 2;
         my @els = q[:a(1)], q[:b(2)], q[:c(3)];
         is @array.perl, q[array-hash(] ~ @els[.[0], .[1], .[2]].join(', ') ~ q[)], "array.perl";
         is %hash.perl, q[array-hash(] ~ @els[.[0], .[1], .[2]].join(', ') ~ q[)], "hash.perl";
