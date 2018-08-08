@@ -657,9 +657,9 @@ This returns a list of pairs stored in the ArrayHash.
 
 method values() returns List:D { @!array».value.List }
 method keys() returns List:D { @!array».key.List }
-method indexes() returns List:D { @!array.keys }
+method indexes() returns List:D { @!array.keys.List }
 method kv() returns List:D { @!array».kv.List }
-method ip() returns List:D { @!array.kv }
+method ip() returns List:D { @!array.kv.List }
 method ikv() returns List:D {
     @!array.kv.flatmap({ .defined && Pair ?? .kv !! $_ })
 }
