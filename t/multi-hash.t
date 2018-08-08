@@ -435,9 +435,14 @@ my %tests =
     },
 ;
 
-for %tests.kv -> $desc, &test {
+my $rand-seed = %*ENV<TEST_RAND_SEED>;
+$rand-seed //= sprintf("%04d%02d%02d", .year, .month, .day) with Date.today;
+srand($rand-seed.Int);
+diag("TEST_RAND_SEED = $rand-seed");
+
+for %tests.sort.pick(*) -> (:key($desc), :value(&test)) {
     subtest {
-        for %inits.kv -> $init-desc, &init {
+        for %inits.sort -> (:key($init-desc), :value(&init)) {
             diag "init: $init-desc, test: $desc";
             my $o = init();
             subtest { temp $_ = $o; test() }, $init-desc;

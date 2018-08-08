@@ -430,6 +430,7 @@ my %tests =
 my $rand-seed = %*ENV<TEST_RAND_SEED>;
 $rand-seed //= sprintf("%04d%02d%02d", .year, .month, .day) with Date.today;
 srand($rand-seed.Int);
+diag("TEST_RAND_SEED = $rand-seed");
 
 for %tests.sort.pick(*) -> (:key($desc), :value(&test)) {
     subtest {
