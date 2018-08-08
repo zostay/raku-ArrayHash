@@ -42,14 +42,14 @@ my %inits =
         my $init = array-hash(a => 1, 'b' => $b, c => 3);
         @array := $init;
         %hash  := $init;
-        make-iter($init.values »-» 1);
+        make-iter(($init.values »-» 1).antipairs.sort».value);
     },
     '04-init-from-pairs-and-positionals' => {
         $b = 2;
         my $init = array-hash(a => 1, 'b' => $b, c => 3);
         @array := $init;
         %hash  := $init;
-        make-iter($init.values »-» 1);
+        make-iter(($init.values »-» 1).antipairs.sort».value);
     },
 ;
 
