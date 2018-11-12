@@ -16,7 +16,7 @@ SYNOPSIS
     @array[1].say; #> "b" => 3;
 
     # The order of the keys is preserved
-    for %hash.kv -> $k, $v { 
+    for %hash.kv -> $k, $v {
         say "$k: $v";
     }
 
@@ -32,7 +32,7 @@ DESCRIPTION
 
 **Experimental:** The API here is experimental. Some important aspects of the API may change without warning.
 
-You can think of this as a [Hash](Hash) that always iterates in insertion order or you can think of this as an [Array](Array) of [Pair](Pair)s with fast lookups by key. Both are correct, though it really is more hashish than arrayish because of the Pairs, which is why it's an ArrayHash and not a HashArray. 
+You can think of this as a [Hash](Hash) that always iterates in insertion order or you can think of this as an [Array](Array) of [Pair](Pair)s with fast lookups by key. Both are correct, though it really is more hashish than arrayish because of the Pairs, which is why it's an ArrayHash and not a HashArray.
 
 An ArrayHash is both Associative and Positional. This means you can use either a `@` sigil or a `%` sigil safely. However, there is some amount of conflicting tension between a [Positional](Positional) and [Assocative](Assocative) data structure. An Associative object in Perl requires unique keys and has no set order. A Positional, on the othe rhand, is a set order, but no inherent uniqueness invariant. The primary way this tension is resolved depends on whether the operations you are performing are hashish or arrayish.
 
@@ -62,11 +62,11 @@ What happened? Why didn't the values changed and where did this extra [Pair](Pai
 
 Since an [ArrayHash](ArrayHash) maintains its order, this rule always applies. A value added near the end will win over a value at the beginning. Adding a value near the beginning will lose to a value nearer the end.
 
-So, returning to the `unshift` example above, the arrayish value with key `"a"` gets unshifted to the front of the array, but immediately nullified because of the later value. The hashish value with key `"b"` sees an existing value for the same key and the existing value wins since it would come after it. 
+So, returning to the `unshift` example above, the arrayish value with key `"a"` gets unshifted to the front of the array, but immediately nullified because of the later value. The hashish value with key `"b"` sees an existing value for the same key and the existing value wins since it would come after it.
 
 The same rule holds for all operations: If the key already exists, but before the position the value is being added, the new value wins. If the key already exists, but after the position we are inserting, the old value wins.
 
-For a regular ArrayHash, the losing value will either be replaced, if the operation is hashish, or will be nullified, if the operation is arrayish. 
+For a regular ArrayHash, the losing value will either be replaced, if the operation is hashish, or will be nullified, if the operation is arrayish.
 
 This might not always be the desired behavior so this module also provides a multi-valued ArrayHash, or multi-hash interface:
 
@@ -128,12 +128,12 @@ Adds the given values onto the end of the ArrayHash. These values will replace a
 
     my @a := array-hash('a' => 1, 'b' => 2);
     @a.push: 'a' => 3, b => 4, 'c' => 5;
-    @a.perl.say; 
+    @a.perl.say;
     #> array-hash("b" => 4, "a" => 3, "c" => 5);
 
     my @m := multi-hash('a' => 1, 'b' => 2);
     @m.push: 'a' => 3, b => 4, 'c' => 5;
-    @m.perl.say; 
+    @m.perl.say;
     #> multi-hash("a" => 1, "b" => 4, "a" => 3, "b" => 4, "c" => 5);
 
 method unshift
@@ -145,12 +145,12 @@ Adds the given values onto the front of the ArrayHash. These values will never r
 
     my @a := array-hash('a' => 1, 'b' => 2);
     @a.unshift 'a' => 3, b => 4, 'c' => 5;
-    @a.perl.say; 
+    @a.perl.say;
     #> array-hash("c" => 5, "a" => 1, "b" => 2);
 
     my @m := multi-hash('a' => 1, 'b' => 2);
     @m.push: 'a' => 3, b => 4, 'c' => 5;
-    @m.perl.say; 
+    @m.perl.say;
     #> multi-hash("a" => 3, "b" => 4, "c" => 5, "a" => 1, "b" => 2);
 
 method splice
@@ -205,7 +205,7 @@ method unique
 
     method unique(ArrayHash:D:) returns ArrayHash:D
 
-For a multivalued hash, this returns the same hash as a non-multivalued hash. Otherwise, it returns itself. 
+For a multivalued hash, this returns the same hash as a non-multivalued hash. Otherwise, it returns itself.
 
 method squish
 -------------
@@ -349,3 +349,4 @@ sub multi-hash
     sub multi-hash(*@a, *%h) returns ArrayHash:D where { *.multivalued }
 
 Constructs a new multivalued ArrayHash containing the given initial pairs in the given order. (Again, if you use [Pair](Pair)s to do the initial insertion, the order will be randomized, but stable upon insertion.)
+
