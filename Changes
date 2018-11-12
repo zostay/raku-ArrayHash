@@ -1,3 +1,7 @@
+{{$NEXT}}
+
+    * Fix location of use v6 for v6.d. :(
+
 v0.3    2018-04-24
 
     * Released to CPAN.
