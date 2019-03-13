@@ -1,35 +1,35 @@
 {
   "name": "ArrayHash",
-  "support": {
-    "source": null
-  },
-  "build-depends": [
-
-  ],
-  "source-url": "git://github.com/zostay/perl6-ArrayHash.git",
-  "test-depends": [
-    "Test",
-    "Test::META"
-  ],
-  "license": "Artistic-2.0",
-  "resources": [
-
-  ],
-  "depends": [
-
-  ],
-  "description": "An array in a hash in an array... like a turducken",
-  "tags": [
-
-  ],
   "provides": {
     "ArrayHash": "lib/ArrayHash.pm6"
   },
+  "source-url": "git://github.com/zostay/perl6-ArrayHash.git",
+  "license": "Artistic-2.0",
+  "build-depends": [
+    
+  ],
+  "tags": [
+    
+  ],
+  "version": "0.4.1",
+  "meta-version": "0",
+  "support": {
+    "source": null
+  },
+  "depends": [
+    
+  ],
+  "resources": [
+    
+  ],
+  "description": "An array in a hash in an array... like a turducken",
+  "perl": "6.c",
+  "auth": "github:zostay",
   "authors": [
     "Sterling Hanenkamp <hanenkamp@cpan.org>"
   ],
-  "version": "0.4",
-  "perl": "6.c",
-  "auth": "github:zostay",
-  "meta-version": "0"
+  "test-depends": [
+    "Test",
+    "Test::META"
+  ]
 }
