@@ -1,3 +1,5 @@
+{{$NEXT}}
+
 v0.4.1	2019-03-12
 
     * Bugfix: Fix broken initial state for multi-hash tests. 
