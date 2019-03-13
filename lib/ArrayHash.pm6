@@ -1,6 +1,6 @@
 use v6;
 
-unit class ArrayHash:ver<0.4>:auth<Sterling Hanenkamp (hanenkamp@cpan.org)> does Associative does Positional;
+unit class ArrayHash:ver<0.4.1>:auth<Sterling Hanenkamp (hanenkamp@cpan.org)> does Associative does Positional;
 
 =NAME ArrayHash - a data structure that is both Array and Hash
 
