@@ -14,6 +14,7 @@ sub make-iter(@o) {
     class {
         method CALL-ME() { @o.shift }
         method AT-POS($pos) { @o[$pos] }
+        method perl() { @o.perl }
     }
 }
 
@@ -37,14 +38,14 @@ my %inits =
         $init{'b'} := $b;
         @array := $init;
         %hash  := $init;
-        make-iter($init.values »-» 1);
+        make-iter(($init.values »-» 1).antipairs.sort».value);
     },
     '04-init-from-pairs-and-positionals' => {
         $b = 2;
         my $init = multi-hash('a' => 1, 'b' => $b, c => 3, 'a' => 4);
         @array := $init;
         %hash  := $init;
-        make-iter($init.values »-» 1);
+        make-iter(($init.values »-» 1).antipairs.sort».value);
     },
 ;
 
@@ -271,7 +272,7 @@ my %tests =
         is %hash<e>, 12, 'hash e added';
 
         my %remains = d => 11, e => 12, b => 13, c => 14;
-        for 0 .. 3 -> $i {
+        for ^4 -> $i {
             my $p = @array[$i];
             my $v = %remains{ $p.key } :delete;
             is $v, $p.value, 'got an expected value';

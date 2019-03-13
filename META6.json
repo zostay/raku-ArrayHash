@@ -4,7 +4,7 @@
     "source": null
   },
   "build-depends": [
-    
+
   ],
   "source-url": "git://github.com/zostay/perl6-ArrayHash.git",
   "test-depends": [
@@ -13,14 +13,14 @@
   ],
   "license": "Artistic-2.0",
   "resources": [
-    
+
   ],
   "depends": [
-    
+
   ],
   "description": "An array in a hash in an array... like a turducken",
   "tags": [
-    
+
   ],
   "provides": {
     "ArrayHash": "lib/ArrayHash.pm6"
@@ -30,6 +30,6 @@
   ],
   "version": "0.4",
   "perl": "6.c",
-  "auth": null,
+  "auth": "github:zostay",
   "meta-version": "0"
 }
