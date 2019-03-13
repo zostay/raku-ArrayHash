@@ -189,7 +189,7 @@ The `%values` and `@values` are a list of new values to insert. If empty, no new
 
 This method will fail with an [X::OutOfRange](X::OutOfRange) exception if the `$offset` or `$size` is out of range.
 
-**Caveat:** It should be clarified that splice does not perform precisely the same sort of operation its named equivalent would. Unlike [#method push](#method push) or [#method unshift](#method unshift), all arguments are treated as arrayish. This is because a splice is very specific about what parts of the data structure are being manipulated.
+**Caveat:** It should be clarified that splice does not perform precisely the same sort of operation its named equivalent would. Unlike [method push](#method push) or [method unshift](#method unshift), all arguments are treated as arrayish. This is because a splice is very specific about what parts of the data structure are being manipulated.
 
 [For the future: Is the caveat correct or should [Pair](Pair)s be treated as hashish instead anyway?]
 
