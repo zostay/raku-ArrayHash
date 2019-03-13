@@ -21,20 +21,20 @@ sub make-iter(@o) {
 my %inits =
     '01-init-hash-then-array' => {
         $b      = 2;
-        %hash  := multi-hash('a' => 1, 'b' => $b, 'c' => 3, 'a' => 4);
+        %hash  := multi-hash('a' => $=1, 'b' => $b, 'c' => $=3, 'a' => $=4);
         @array := %hash;
         make-iter(@ = 0, 1, 2, 3);
     },
     '02-init-array-then-hash' => {
         $b      = 2;
-        @array := multi-hash('a' => 1, 'b' => $b, 'c' => 3, 'a' => 4);
+        @array := multi-hash('a' => $=1, 'b' => $b, 'c' => $=3, 'a' => $=4);
         %hash  := @array;
         make-iter(@ = 0, 1, 2, 3);
     },
     '03-init-from-pairs' => {
         $b = 2;
         my $init = multi-hash(a => 1, b => $b, c => 3);
-        $init.push: 'a' => 4;
+        $init.push: 'a' => $=4;
         $init{'b'} := $b;
         @array := $init;
         %hash  := $init;
@@ -42,7 +42,7 @@ my %inits =
     },
     '04-init-from-pairs-and-positionals' => {
         $b = 2;
-        my $init = multi-hash('a' => 1, 'b' => $b, c => 3, 'a' => 4);
+        my $init = multi-hash('a' => $=1, 'b' => $b, c => 3, 'a' => $=4);
         @array := $init;
         %hash  := $init;
         make-iter(($init.values »-» 1).antipairs.sort».value);

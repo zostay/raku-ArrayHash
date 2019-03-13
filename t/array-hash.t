@@ -20,13 +20,13 @@ sub make-iter(Array(Positional) $o) {
 my %inits =
     '01-init-hash-then-array' => {
         $b      = 2;
-        %hash  := array-hash('a' => 1, 'b' => $b, 'c' => 3);
+        %hash  := array-hash('a' => $=1, 'b' => $b, 'c' => $=3);
         @array := %hash;
         make-iter(@ = 0, 1, 2);
     },
     '02-init-array-then-hash' => {
         $b      = 2;
-        @array := array-hash('a' => 1, 'b' => $b, 'c' => 3);
+        @array := array-hash('a' => $=1, 'b' => $b, 'c' => $=3);
         %hash  := @array;
         make-iter(@ = 0, 1, 2);
     },
