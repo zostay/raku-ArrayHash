@@ -434,6 +434,13 @@ my %tests =
             }
         }
     },
+    '25-clone' => {
+        my @clone-array := @array.clone;
+        my %clone-hash  := %hash.clone;
+
+        is-deeply @clone-array, @array, 'cloned array matches original';
+        is-deeply %clone-hash, %hash, 'cloned hash matches original';
+    },
 ;
 
 my $rand-seed = %*ENV<TEST_RAND_SEED>;

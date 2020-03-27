@@ -416,6 +416,10 @@ method rotate(ArrayHash:D: Int $n = 1) returns ArrayHash:D {
     ArrayHash.new(;$!multivalued).push(|@!array.rotate($n))
 }
 
+method clone(ArrayHash:D:) returns ArrayHash:D {
+    ArrayHash.new(:$!multivalued, |@!array.clone, |%!hash.clone);
+}
+
 # my role TypedArrayHash[::TValue] does Associative[TValue] does Positional[Pair] {
 #
 # }
