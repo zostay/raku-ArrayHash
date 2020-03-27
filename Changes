@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+    * Bugfix: If multi-hash('a' => 1, 'a' => 2).[0]:delete occured, the hash
+      side of the multi-hash would no longer mirror the state of the array side.
+      This then triggered a post-condition failure.
+
 v0.4.1	2019-03-12
 
     * Bugfix: Fix broken initial state for multi-hash tests. 

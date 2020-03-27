@@ -234,6 +234,11 @@ method DELETE-POS(ArrayHash:D: $pos) returns Pair {
 
     if $pair = @!array[ $pos ] :delete {
         %!hash{ $pair.key } :delete;
+
+        if $!multivalued && self!found-after($pos, $pair.key) {
+            my $next = @!array.first(want($pair.key));
+            %!hash{ $pair.key } := $next.value;
+        }
     }
 
     $pair;
