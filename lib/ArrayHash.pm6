@@ -70,6 +70,7 @@ method AT-POS(ArrayHash:D: $pos) returns Pair {
 }
 
 method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) {
+    # Newly assigned key must be the same container in both array and hash
     POST { %!hash{$key} =:= @!array[ @!array.first(want($key), :k, :end) ].value }
 
     if %!hash{$key} :exists {
@@ -90,8 +91,13 @@ method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) {
 }
 
 method ASSIGN-POS(ArrayHash:D: $pos, Pair:D $pair) {
+    # array-hash must contain the new pair no more than one times alrady
     PRE  { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
+
+    # array-hash must contain each key zero or one times
     POST { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
+
+    # Newly assigned key must be the same container in both array and hash
     POST { %!hash{$pair.key} =:= @!array[ @!array.first(want($pair.key), :k, :end) ].value }
 
     if !$!multivalued && (%!hash{ $pair.key } :exists) {
@@ -132,6 +138,7 @@ method ASSIGN-POS(ArrayHash:D: $pos, Pair:D $pair) {
 }
 
 method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw {
+    # Newly assigned key must be the same container in both array and hash
     POST { %!hash{$key} =:= @!array.reverse.first(want($key)).value }
 
     if %!hash{$key} :exists {
@@ -146,8 +153,13 @@ method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw {
 }
 
 method BIND-POS(ArrayHash:D: $pos, Pair:D \pair) {
+    # array-hash must contain the new pair no more than one times already
     PRE  { $!multivalued || @!array.grep(want(pair.key)).elems <= 1 }
+
+    # array-hash may contain each key zero or one times
     POST { $!multivalued || @!array.grep(want(pair.key)).elems <= 1 }
+
+    # Newly assigned key must be the same container in both array and hash
     POST { %!hash{pair.key} =:= @!array.reverse.first(want(pair.key)).value }
 
     if !$!multivalued && (%!hash{ pair.key } :exists) {
@@ -181,7 +193,10 @@ method EXISTS-POS(ArrayHash:D: $pos) {
 }
 
 method DELETE-KEY(ArrayHash:D: $key) {
+    # Deleted key must not exist in hash
     POST { %!hash{$key} :!exists }
+
+    # Deleted key must not exist in array
     POST { @!array.first(want($key), :k) ~~ Nil }
 
     if %!hash{$key} :exists {
@@ -196,12 +211,18 @@ method DELETE-KEY(ArrayHash:D: $key) {
 method DELETE-POS(ArrayHash:D: $pos) returns Pair {
     my Pair $pair;
 
+    # Deleted value must be undef in array
     POST { @!array[$pos] ~~ Pair:U }
+
+    # deleted pair from array-hash must not exist in array
     POST {
         $pair.defined && !$!multivalued ??
             @!array.first(want($pair.key), :k) ~~ Nil
         !! True
     }
+
+    # deleted pair from multi-hash array and hash must agree on whether the pair
+    # has been completely removed or just partially removed
     POST {
         $pair.defined && $!multivalued ??
             (@!array.first(want($pair.key), :k) ~~ Int
