@@ -40,9 +40,9 @@ sub want($key) {
     & = { .defined && .key eqv $key }
 }
 
-method new(Bool :$multivalued = False, *@a, *%h)  {
+method new(*@a, Bool :$multivalued = False)  {
     my $self = self.bless(:$multivalued);
-    $self.push: |@a, |%h;
+    $self.push: |@a;
     $self
 }
 
@@ -137,18 +137,18 @@ method ASSIGN-POS(ArrayHash:D: $pos, Pair:D $pair) {
     $pair;
 }
 
-method BIND-KEY(ArrayHash:D: $key, $value is rw) is rw {
+method BIND-KEY(ArrayHash:D: $key, Mu \value) is raw {
     # Newly assigned key must be the same container in both array and hash
     POST { %!hash{$key} =:= @!array.reverse.first(want($key)).value }
 
     if %!hash{$key} :exists {
-        %!hash{$key} := $value;
+        %!hash{$key} := value;
         my $pos = @!array.first(want($key), :k, :end);
-        @!array[$pos] := $key => $value;
+        @!array[$pos] := $key => value;
     }
     else {
-        %!hash{$key} := $value;
-        @!array.push: $key => $value;
+        %!hash{$key} := value;
+        @!array.push: $key => value;
     }
 }
 
@@ -244,20 +244,53 @@ method DELETE-POS(ArrayHash:D: $pos) returns Pair {
     $pair;
 }
 
-method push(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
-    for @values    -> $p     { self.ASSIGN-POS(@!array.elems, $p) }
-    for %values.kv -> $k, $v { self.ASSIGN-KEY($k, $v) }
+method !values-to-pairs(\values) {
+    gather {
+        my ($k, $n);
+
+        for values.kv -> $i, $v {
+            $n = $i;
+
+            note "3rd: ", $v.VAR.WHICH if $i == 3;
+
+            with $k {
+                take $k => $v;
+                $k = Nil;
+            }
+            elsif $v ~~ Pair {
+                take $v
+            }
+            else {
+                $k = $v;
+            }
+        }
+
+        with $k {
+            fail X::Hash::Store::OddNumber.new(
+                found => $n,
+                last  => $k,
+            );
+        }
+    }
+}
+
+method push(ArrayHash:D: *@values) returns ArrayHash:D {
+    for self!values-to-pairs(@values) -> $pair {
+        self.ASSIGN-POS(@!array.elems, $pair);
+    }
     self
 }
 
-method append(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
-    for @values    -> $p     { self.ASSIGN-POS(@!array.elems, $p) }
-    for %values.kv -> $k, $v { self.ASSIGN-KEY($k, $v) }
+method append(ArrayHash:D: +@values) returns ArrayHash:D {
+    for self!values-to-pairs(@values) -> $pair {
+        self.ASSIGN-POS(@!array.elems, $pair);
+    }
     self
 }
 
-method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
-    for @values.kv -> $i, $p {
+method unshift(ArrayHash:D: *@values) returns ArrayHash:D {
+
+    for self!values-to-pairs(@values).reverse.kv -> $i, $p {
         if !$!multivalued and %!hash{ $p.key } :exists {
             @!array.unshift: Pair;
         }
@@ -268,33 +301,23 @@ method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D {
         }
     }
 
-    for %values.kv -> $k, $v {
-        if %!hash{ $k } :!exists {
-            @!array.unshift: $k => $v;
-            %!hash{ $k } := $v;
-        }
-        elsif $!multivalued {
-            @!array.unshift: $k => $v;
-        }
-    }
-
     self
 }
 
-multi method splice(ArrayHash:D: &offset, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
-    callsame(offset(self.elems), $size, |@values, |%values)
+multi method splice(ArrayHash:D: &offset, Int(Cool) $size?, *@values) returns ArrayHash:D {
+    callsame(offset(self.elems), $size, |@values)
 }
 
-multi method splice(ArrayHash:D: Int(Cool) $offset, &size, *@values, *%values) returns ArrayHash:D {
-    callsame($offset, size(self.elems - $offset), |@values, |%values)
+multi method splice(ArrayHash:D: Int(Cool) $offset, &size, *@values) returns ArrayHash:D {
+    callsame($offset, size(self.elems - $offset), |@values)
 }
 
-multi method splice(ArrayHash:D: &offset, &size, *@values, *%values) returns ArrayHash:D {
+multi method splice(ArrayHash:D: &offset, &size, *@values) returns ArrayHash:D {
     my $o = offset(self.elems);
-    callsame($o, size(self.elems - $o), |@values, |%values)
+    callsame($o, size(self.elems - $o), |@values)
 }
 
-multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D {
+multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@values) returns ArrayHash:D {
     $size //= self.elems - ($offset min self.elems);
 
     unless 0 <= $offset <= self.elems {
@@ -316,7 +339,7 @@ multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@valu
     # Compile the list of replacements, nullifying those that have keys
     # matching pairs later in the list (the later items are kept).
     my @repl;
-    for @values.Slip, %values.pairs.Slip -> $pair {
+    for self!values-to-pairs(@values) -> $pair {
         my $p = do given $pair {
             when Pair:D { $pair }
             when .defined { $pair.key => $pair.value }
@@ -390,15 +413,56 @@ method shift(ArrayHash:D) returns Pair {
     return $head;
 }
 
-method values() returns List:D { @!array».value.List }
-method keys() returns List:D { @!array».key.List }
-method indexes() returns List:D { @!array.keys.List }
-method kv() returns List:D { @!array».kv.List }
-method ip() returns List:D { @!array.kv.List }
-method ikv() returns List:D {
-    @!array.kv.flatmap({ .defined && Pair ?? .kv !! $_ })
+method values(
+    Bool :$array,
+    Bool :$hash,
+) returns Seq:D {
+    if $array {
+        @!array.values
+    }
+    else {
+        @!array.grep({ .defined }).map({ .value })
+    }
 }
-method pairs() returns List:D { @!array }
+
+method keys(
+    Bool :$array,
+    Bool :$hash,
+) returns Seq:D {
+    if $array {
+        @!array.keys
+    }
+    else {
+        @!array.grep({ .defined }).map({ .key })
+    }
+}
+
+method kv(
+    Bool :$array,
+    Bool :$hash,
+) returns Seq:D {
+    if $array && $hash {
+        @!array.kv.map({ .defined && Pair ?? .kv !! $_ }).flat
+    }
+    elsif $array {
+        @!array.kv
+    }
+    else {
+        @!array.map({ .kv }).flat
+    }
+}
+
+method pairs(
+    Bool :$array,
+    Bool :$hash,
+) returns Seq:D {
+    if $array {
+        @!array.pairs
+    }
+    else {
+        @!array.grep({ .defined })
+    }
+}
 
 method invert() returns List:D {
     die 'not yet implemented'
@@ -410,6 +474,11 @@ method antipairs() returns List:D {
 
 method permutations() {
     die 'not yet implmeneted'
+}
+
+multi method raku(ArrayHash:D:) returns Str:D {
+    my $type = $!multivalued ?? 'multi-hash' !! 'array-hash';
+    $type ~ '(' ~ @!array.map({ .defined ?? .raku !! 'Pair' }).join(', ') ~ ')'
 }
 
 multi method perl(ArrayHash:D:) returns Str:D {
@@ -472,8 +541,10 @@ method clone(ArrayHash:D:) returns ArrayHash:D {
 #     }
 # }
 
-our sub array-hash(*@a, *%h) is export { ArrayHash.new(|@a, |%h) }
-our sub multi-hash(*@a, *%h) is export { ArrayHash.new(:multivalued).push(|@a, |%h) }
+our sub array-hash(|c) is export { ArrayHash.new(|c) }
+our sub multi-hash(|c) is export { ArrayHash.new(|c, :multivalued) }
+
+=begin pod
 
 =NAME ArrayHash - a data structure that is both Array and Hash
 
@@ -502,61 +573,71 @@ our sub multi-hash(*@a, *%h) is export { ArrayHash.new(:multivalued).push(|@a, |
 
 =end SYNOPSIS
 
-=begin DESCRIPTION
+=head1 DESCRIPTION
 
 B<Experimental:> The API here is experimental. Some important aspects of the API may change without warning.
 
 You can think of this as a L<Hash> that always iterates in insertion order or you can think of this as an L<Array> of L<Pair>s with fast lookups by key. Both are correct, though it really is more hashish than arrayish because of the Pairs, which is why it's an ArrayHash and not a HashArray.
 
-An ArrayHash is both Associative and Positional. This means you can use either a C<@> sigil or a C<%> sigil safely. However, there is some amount of conflicting tension between a L<Positional> and L<Assocative> data structure. An Associative object in Perl requires unique keys and has no set order. A Positional, on the othe rhand, is a set order, but no inherent uniqueness invariant. The primary way this tension is resolved depends on whether the operations you are performing are hashish or arrayish.
+An ArrayHash is both L<Associative> and L<Positional>. This means you can use either a C<@> sigil or a C<%> sigil safely. However, there is some amount of conflicting tension between a Positional and Assocative data structure. An Associative object in Raku requires unique keys and has no set order. A Positional, on the other hand, has a set order, but no inherent uniqueness invariant. The primary way this tension is resolved depends on whether the operations you are performing are hashish or arrayish.
 
-By hashish, we mean operations that are either related to Associative objects or operations receiving named arguments. By arrayish, we mean operations that are either related to Positional objects or operations receiving positional arguments. In Perl 6, a Pair may generally be passed either Positionally or as a named argument. A bare name generally implies a named argument, e.g., C<:a(1)> or C<<a => 1>> are named while C<<'a' => 1>> is positional.
+Whether an operation is hashish or arrayish ought to be obvious in most cases. For example, an array lookup using the C<.[]> positional subscript is obviously arrayish whereas a key lookup using the C<.{}> associative subscript is obviously hashish. Methods that are documented on C<Hash> but not C<Array> can be safely considered hashish and those that are documented on C<Array> but not C<Hash> as arrayish.
 
-For example, consider this C<push> operation:
+There are a few operations that overlap between them. Where there could be a difference in behavior, optional C<:hash> and C<:array> adverb are provided to allow you to select whether the operation acts like an L<Hash> operation or an L<Array> operation (or sometimes a combination of the two). The default is usually C<:hash> in those cases. I've tried to keep the choices intuitive, but check the documentation if there's any doubt.
 
-    my @a := array-hash('a' => 1, 'b' => 2);
-    @a.push: 'a' => 3, b => 4;
-    @a.perl.say;
-    #> array-hash(:b(4), :a(3));
+Prior to v0.1.0 of this module, the way some functions behaved depended largely upon whether positional arguments or named arguments were used. However, as named arguments are not handled by most L<Hash> functions in the way they were by this class, the practice has now been discontinued.
 
-Here, the C<push> is an arrayish operation, but it is given both a Pair, C<<'a' => 3>>, and a hashish argument C<<b => 4>>. Therefore, the L<Pair> keyed with C<"a"> is pushed onto the end of the ArrayHash and the earlier value is nullified. The L<Pair> keyed with C<"b"> performs a more hash-like operation and replaces the value on the existing pair.
+=head2 Last Pair Matters Rule
 
-Now, compare this to a similar C<unshift> operation:
+In Raku, a L<Hash> key will take on the value of the last key set. For example,
 
-    my @a := array-hash('a' => 1, 'b' => 2);
-    @a.unshift: 'a' => 3, b => 4;
-    @a.perl.say;
-    #> array-hash('a' => 1, 'b' => 2);
+    my %hash = a => 1, a => 2;
+    say %hash<a>; #> 2
 
-What happened? Why didn't the values changed and where did this extra L<Pair> come from? Again, C<unshift> is arrayish and we have an arrayish and a hashish argument, but this time we demonstrate another normal principle of Perl hashes that is enforced, which is, when dealing with a list of L<Pair>s, the latest Pair is the one that bequeaths its value to the hash. That is,
+This rule is preserved in L<ArrayHash>, but with special semantics because of ordering:
 
-    my %h = a => 1, a => 2;
-    say "a = %h<a>";
-    #> a = 2
+    my %array-hash := array-hash('a' => 1, 'a' => 2);
+    say %hash<a>; #> 2
+    say %hash[0]; #> (Pair)
+    say %hash[1]; #> a => 2
 
-Since an L<ArrayHash> maintains its order, this rule always applies. A value added near the end will win over a value at the beginning. Adding a value near the beginning will lose to a value nearer the end.
+That is, an operation that manipulates the object in arrayish mode will preserve the positions of the objects, but will ensure that the last key set is the one preserved.
 
-So, returning to the C<unshift> example above, the arrayish value with key C<"a"> gets unshifted to the front of the array, but immediately nullified because of the later value. The hashish value with key C<"b"> sees an existing value for the same key and the existing value wins since it would come after it.
+This rule may have some unexpected consequences if you are not aware of it. For example, considering the following C<unshift> operations:
 
-The same rule holds for all operations: If the key already exists, but before the position the value is being added, the new value wins. If the key already exists, but after the position we are inserting, the old value wins.
+    my %a := array-hash('a' => 1);
+    %a.unshift: 'a' => 10, 'a' => 20;
+    say %a<a>; #> 1
+    say %a[0]; #> (Pair)
+    say %a[1]; #> (Pair)
+    say %a[2]; #> a => 1
 
-For a regular ArrayHash, the losing value will either be replaced, if the operation is hashish, or will be nullified, if the operation is arrayish.
+The C<unshift> operation adds values to the front of the ArrayHash, but as we are adding a key that would be after, they get inserted as undefined L<Pair>s instead to preserve the latest value rule.
 
-This might not always be the desired behavior so this module also provides a multi-valued ArrayHash, or multi-hash interface:
+The same last pair matters rule holds for all operations. Specifically, if you insert a new key at position A and the last pair with the same key is at position B:
 
-    my @a := multi-hash('a' => 1, 'b' => 2);
-    @a.push: 'a' => 3, b => 4;
-    @a.perl.say;
-    #> multi-hash('a' => 1, "b" => 4, "a" => 3);
+=item The new value is preserved if A > B
 
-The operations all work the same, but array values are not nullified and it is fine for there to be multiple values in the array. This is the same class, ArrayHash, but the L<has $.multivalued> property is set to true.
+=item The old value is preserved if A < B
+
+=head2 The array-hash versus multi-hash
+
+While the last pair matters rule always holds that a later position of a key will override the earlier, it is possible to preserve the pairs that have been overridden. This class provides a variant on the C<ArrayHash> via the L<multi-hash#sub multi-hash> constructor that does this:
+
+    my %mh := multi-hash('a' => 1, 'a' => 2);
+    say %mh<a>; #> 2
+    %mh[1]:delete;
+    say %mh<a>; #> 1
+
+As you can see it has some interesting properties. All valuesof a given key are preserved, but if you request the value using a key lookup, you will only receive the value with the largest positional index. If you iterate over the values as an array, you will be able to retrieve every value stored for that key.
+
+This is not quite the same functionality as L<Hash::MultiValue>, which provides more tools for getting at these multiple values, but it has similar semantics.
+
+Whether using an L<array-hash#sub array-hash> or a L<multi-hash#sub multi-hash>, the operations all work nearly the same, but array values are not nullified in a C<multi-hash> like they are in an C<array-hash>. These are both represented by the same class, ArrayHash, but the L<$.multivalued#method multivalued> property is set to C<True>.
 
 [For future consideration: Consider adding a C<has $.collapse> attribute or some such to govern whether a replaced value in a C<$.multivalued> array hash is replaced with a type object or spiced out. Or perhaps change the C<$.multivalued> into an enum of operational modes.]
 
 [For future consideration: A parameterizable version of this class could be created with some sort of general keyable object trait rather than Pair.]
-
-=end DESCRIPTION
-=begin pod
 
 =head1 Methods
 
@@ -564,70 +645,62 @@ The operations all work the same, but array values are not nullified and it is f
 
     method multivalued() returns Bool:D
 
-This setting determines whether the ArrayHash is a regular array-hash or a multi-hash. Usually, you will use the L<sub array-hash> or L<sub multi-hash> constructors rather than setting this directly on the C<new> constructor.
+This setting determines whether the ArrayHash is a regular array-hash or a multi-hash. It is recommended that you use the L<array-hash#sub array-hash> or L<multi-hash#sub multi-hash> constructors instead of the L<new method#method new>.
 
 =head2 method new
 
-    method new(Bool :multivalued = False, *@a, *%h) returns ArrayHash:D
+    method new(Bool :$multivalued = False, *@pairs) returns ArrayHash:D
 
-Constructs a new ArrayHash. This is not the preferred method of construction. You should use L<sub array-hash> or L<sub multi-hash> instead.
+Constructs a new ArrayHash. This is not the preferred method of construction. It is recommended that you use L<array-hash#sub array-hash> or L<multi-hash#sub multi-hash> instead.
+
+The C<@pairs> passed may either be a list of L<Pair> objects or pairs of other objects. If pass objects with a type other than L<Pair>, you must pass an even number of objects or you will end up with an L<X::Hash::Store::OddNumber> failure.
 
 =head2 method of
 
     method of() returns Mu:U
 
-Returns what type of values are stored. This always returns a L<Pair> type object.
+Returns what type of values are stored. This will always return a L<Pair> type object.
 
 =head2 method postcircumfix:<{ }>
 
     method postcircumfix:<{ }>(ArrayHash:D: $key) returns Mu
 
-This provides the usual value lookup by key. You can use this to retrieve a value, assign a value, or bind a value. You may also combine this with the hash adverbs C<:delete> and C<:exists>.
+This provides the usual value lookup by key. You can use this to retrieve a value, assign a value, or bind a value. You may also combine this with the hash adverbs C<:delete>, C<:exists>, C<:p>, C<:k>, and C<:v>.
 
 =head2 method postcircumfix:<[ ]>
 
     method postcircumfix:<[ ]>(ArrayHash:D: Int:D $pos) returns Pair
 
-This returns the value lookup by index. You can use this to retrieve the pair at the given index or assign a new pair or even bind a pair. It may be combined with the array adverbs C<:delete> and C<:exists> as well.
+This returns the value lookup by index. You can use this to retrieve the pair at the given index or assign a new pair or even bind a pair. It may be combined with the array adverbs C<:delete>, C<:exists>, C<:p>, C<:k>, and C<:v>.
 
 =head2 method push
 
-    method push(ArrayHash:D: *@values, *%values) returns ArrayHash:D
+    method push(ArrayHash:D: *@values) returns ArrayHash:D
 
-Adds the given values onto the end of the ArrayHash. These values will replace any existing values with matching keys.
-
-    my @a := array-hash('a' => 1, 'b' => 2);
-    @a.push: 'a' => 3, b => 4, 'c' => 5;
-    @a.perl.say;
-    #> array-hash("b" => 4, "a" => 3, "c" => 5);
-
-    my @m := multi-hash('a' => 1, 'b' => 2);
-    @m.push: 'a' => 3, b => 4, 'c' => 5;
-    @m.perl.say;
-    #> multi-hash("a" => 1, "b" => 4, "a" => 3, "b" => 4, "c" => 5);
+Adds the given values onto the end of the ArrayHash. Because of the L<#Last Pair Matters Rule>, these values will always replace any existing values with matching keys.
 
 =head2 method unshift
 
     method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D
 
-Adds the given values onto the front of the ArrayHash. These values will never replace any existing values in the data structure. In a multi-hash, these unshifted pairs will be put onto the front of the data structure without changing the primary keyed value. These insertions will be nullified if the hash is not multivalued.
+Adds the given values onto the front of the ArrayHash. Because of the L<#Last Pair Matters Rule>, these values will never replace any existing values in the data structure. In a multi-hash, these unshifted pairs will be put onto the front of the data structure without changing the primary keyed value. These insertions will be nullified if the hash is not multivalued.
 
     my @a := array-hash('a' => 1, 'b' => 2);
-    @a.unshift 'a' => 3, b => 4, 'c' => 5;
-    @a.perl.say;
-    #> array-hash("c" => 5, "a" => 1, "b" => 2);
+    @a.unshift 'a' => 3, 'b' => 4, 'c' => 5;
+    @a.raku.say;
+    #> array-hash((Pair), (Pair), "c" => 5, "a" => 1, "b" => 2);
 
     my @m := multi-hash('a' => 1, 'b' => 2);
-    @m.push: 'a' => 3, b => 4, 'c' => 5;
-    @m.perl.say;
+    @m.push: 'a' => 3, 'b' => 4, 'c' => 5;
+    @m.raku.say;
     #> multi-hash("a" => 3, "b" => 4, "c" => 5, "a" => 1, "b" => 2);
 
 =head2 method splice
 
-    multi method splice(ArrayHash:D: &offset, Int(Cool) $size? *@values, *%values) returns ArrayHash:D
-    multi method splice(ArrayHash:D: Int(Cool) $offset, &size, *@values, *%values) returns ArrayHash:D
-    multi method splice(ArrayHash:D: &offset, &size, *@values, *%values) returns ArrayHash:D
-    multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@values, *%values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: &offset, Int(Cool) $size? *@values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: Int(Cool) $offset, &size, *@values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: &offset, &size, *@values) returns ArrayHash:D
+    multi method splice(ArrayHash:D: Int(Cool) $offset = 0, Int(Cool) $size?, *@values) returns ArrayHash:D
 
 This is a general purpose splice method for ArrayHash. As with L<Array> splice, it is able to perform most modification operations.
 
@@ -643,7 +716,7 @@ This is a general purpose splice method for ArrayHash. As with L<Array> splice, 
     @a.splice: 5, 1, Pair;      # deletion
 
     # And some operations that are uniqe to splice
-    @a.splice: 1, 3;             # delete and squash
+    @a.splice: 1, 3;            # delete and squash
     @a.splice: 3, 0, "a" => 1;  # insertion
 
     # And the no-op, the $offset could be anything legal
@@ -653,13 +726,11 @@ The C<$offset> is a point in the ArrayHash to perform the work. It is not an ind
 
 The C<$size> determines how many elements after C<$offset> will be removed. These are returned as a new ArrayHash.
 
-The C<%values> and C<@values> are a list of new values to insert. If empty, no new values are inserted. The number of elements inserted need not have any relationship to the number of items removed.
+The C<@values> are a list of new values to insert, which may be a list of L<Pair>s or pairs other objects to be combined into L<Pair>s. If empty, no new values are inserted. The number of elements inserted need not have any relationship to the number of items removed.
 
 This method will fail with an L<X::OutOfRange> exception if the C<$offset> or C<$size> is out of range.
 
-B<Caveat:> It should be clarified that splice does not perform precisely the same sort of operation its named equivalent would. Unlike L<#method push> or L<#method unshift>, all arguments are treated as arrayish. This is because a splice is very specific about what parts of the data structure are being manipulated.
-
-[For the future: Is the caveat correct or should L<Pair>s be treated as hashish instead anyway?]
+This method will fail with a L<X::Hash::Store::OddNumber> exception if an odd number of non-L<Pair> objects is passed.
 
 =head2 method sort
 
@@ -697,45 +768,73 @@ Takes the first element off the ArrayHash and returns it.
 
 =head2 method values
 
-    method values() returns List:D
+    method values(
+        Bool :$hash = False,
+        Bool :$array = False,
+    ) returns Seq:D
 
-Returns all the values of the stored pairs in insertion order.
+Returns all the values in insertion order. In hash mode, the default, the values of the hash are returned. In array mode, the pairs are returned, which may include Pair type objects for elements that have been deleted or nullified or never set. No combined hash/array mode is defined. The mode is selected by specifying the C<:hash> or C<:array> adverbs.
+
+    my $ah = array-hash('a' => 1, 'b' => 2);
+    say $ah.values;         #> (1 2)
+    say $ah.values(:array); #> (a => 1 b => 2)
+
+For a L<multi-hash#sub multi-hash>, every value will be iterated.
+
+    my $mh = multi-hash('a' => 1, 'a' => 2);
+    my $mh.values; #> (1 2)
 
 =head2 method keys
 
-    method keys() returns List:D
+    method keys(
+        Bool :$hash = False,
+        Bool :$array = False,
+    ) returns Seq:D
 
-Returns all the keys of the stored pairs in insertion order.
+Returns all the keys of the stored pairs in insertion order. In hash mode, the default, the values of the keys of the hash are turned. In array mode, the indexes of the array are returned.wNon combined array/hash mode is defined. The mode is selected using the C<:hash> and C<:array> adverbs.
 
-=head2 method indexes
+    my $ah = array-hash('a' => 1, 'b' => 2);
+    say $ah.keys;         #> (a b)
+    say $ah.keys(:array); #> (0 1)
 
-    method index() returns List:D
+For a L<multi-hash#sub multi-hash>, every key will be iterated:
 
-This returns the indexes of the ArrayHash, similar to what would be returned by L<Array#method keys>.
+    my $mh = multi-hash('a' => 1, 'a' => 2);
+    say $ah.keys; #> (a a)
 
 =head2 method kv
 
-    method kv() returns List:D
+    method kv(
+        Bool :$array = False,
+        Bool :$hash = False,
+    ) returns Seq:D
 
-This returns an alternating list of key/value pairs. The list is always returned in insertion order.
+This returns an alternating sequence of keys and values. The sequence is always returned in insertion order.
 
-=head2 method ip
+In hash mode, the default, the keys will be the hash key and the value will be the hash value stored according to the L<latest key matters rule#Latest Key Matters Rule>. In array mode, the keys will be the array index and the value will be the L<Pair> stored at that index. In combined hash/array mode, the result will be a triple alternation: array index, hash key, hash value. The mode is selected using the C<:hash> and C<:array> adverbs.
 
-    method ip() returns List:D
+    my $ah = array-hash('a' => 10, 'b' => 20);
+    say $ah.kv;                #> (a 10 b 20)
+    say $ah.kv(:array);        #> (0 a => 10 1 b => 20)
+    say $ah.kv(:array, :hash); #> (0 a 10 1 b 20)
 
-This returns an alternating list of index/pair pairs. This is similar to what would be returned by L<Array#method kv> storing L<Pair>s.
+For a L<multi-hash#sub multi-hash>, every key/value pair will be iterated:
 
-=head2 method ikv
-
-    method ikv() returns List:D
-
-This returns an alternating list of index/key/value tuples. This list is always returne d in insertion order.
+    my $mh = multi-hash('a' => 1, 'a' => 2);
+    say $mh.kv; #> a 1 a 2
 
 =head2 method pairs
 
-    method pairs() returns List:D
+    method pairs(
+        Bool :$array = False,
+        Bool :$hash = False,
+    ) returns Seq:D
 
-This returns a list of pairs stored in the ArrayHash.
+This returns a sequence of pairs stored in the ArrayHash. In hash mode, the default, only the defined hash key/value pairs are returned. In array mode, the array key/value pairs are returned. The keys will be the array indexes and the vvalues will be the hash key/value pair stored at each index.
+
+    my $ah = array-hash('a' => 10, 'b' => 20);
+    say $ah.pairs;        #> (a => 10 b => 20)
+    say $ah.pairs(:array) #> (0 => a => 10 1 => b => 20)
 
 =head2 method invert
 
@@ -753,17 +852,17 @@ Not yet implemented.
 
 Not yet implemented.
 
-=head2 method perl
+=head2 method raku
 
-    multi method perl(ArrayHash:D:) returns Str:D
+    multi method raku(ArrayHash:D:) returns Str:D
 
-Returns the Perl code that could be used to recreate this list.
+Returns the Raku code that could be used to recreate this list.
 
 =head2 method gist
 
     multi method gist(ArrayHash:D:) returns Str:D
 
-Returns the Perl code that could be used to recreate this list, up to the 100th element.
+Returns the Raku code that could be used to recreate this list, up to the 100th element.
 
 =head2 method fmt
 
@@ -787,7 +886,7 @@ Returns the ArrayHash, but with the pairs inserted rotated by C<$n> elements.
 
     sub array-hash(*@a, *%h) returns ArrayHash:D where { !*.multivalued }
 
-Constructs a new ArrayHash with multivalued being false, containing the given initial pairs in the given order (or whichever order Perl picks arbitrarily if passed as L<Pair>s.
+Constructs a new ArrayHash with multivalued being false, containing the given initial pairs in the given order (or whichever order Raku picks arbitrarily if passed as L<Pair>s.
 
 =head2 sub multi-hash
 

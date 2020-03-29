@@ -1,5 +1,17 @@
 {{$NEXT}}
 
+    * COMPATIBILITY BREAKING: Previously, this class has accepted named
+      arguments as hash items to add to the array-hash or multi-hash. However,
+      this is not Raku-ish. From now on, elements must be added via positional
+      arguments. If the arguments are Pairs, the Pairs will be added directly.
+      If the items are not Pairs, they should be provided as an evenly numbered
+      list of items that will be made into Pairs. A similar change has been made
+      for all methods, such as .push. See documentation for details.
+    * COMPATIBILITY BREAKING: (Maybe.) Some methods which previously returns
+      List now return Seq, e.g., values, keys, kv, etc.
+    * Methods that are both hashish and arrayish may have a :array/:hash adverb
+      selector to allow you to choose which version of the method to use. The
+      default is usually :hash if not specified.
     * Bugfix: If multi-hash('a' => 1, 'a' => 2).[0]:delete occured, the hash
       side of the multi-hash would no longer mirror the state of the array side.
       This then triggered a post-condition failure.

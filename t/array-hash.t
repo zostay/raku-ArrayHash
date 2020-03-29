@@ -20,6 +20,7 @@ sub make-iter(Array(Positional) $o) {
 my %inits =
     '01-init-hash-then-array' => {
         $b      = 2;
+        note "b: ", $b.VAR.WHICH;
         %hash  := array-hash('a' => $=1, 'b' => $b, 'c' => $=3);
         @array := %hash;
         make-iter(@ = 0, 1, 2);
@@ -30,7 +31,7 @@ my %inits =
         %hash  := @array;
         make-iter(@ = 0, 1, 2);
     },
-    '03-init-from-pairs' => {
+    '03-init-from-kv-and-pair' => {
         $b = 2;
         # TODO Figure out my original intention here and either do that or
         # delete these init. I believe I meant for this to be:
@@ -39,14 +40,14 @@ my %inits =
         #
         # That causes test fails at the mo', so I'm leaving it like this for
         # now.
-        my $init = array-hash(a => 1, 'b' => $b, c => 3);
+        my $init = array-hash('a', 1, 'b' => $b, 'c', 3);
         @array := $init;
         %hash  := $init;
         make-iter(($init.values »-» 1).antipairs.sort».value);
     },
-    '04-init-from-pairs-and-positionals' => {
+    '04-init-from-kv' => {
         $b = 2;
-        my $init = array-hash(a => 1, 'b' => $b, c => 3);
+        my $init = array-hash('a', 1, 'b', $b, 'c', 3);
         @array := $init;
         %hash  := $init;
         make-iter(($init.values »-» 1).antipairs.sort».value);
@@ -199,7 +200,7 @@ my %tests =
         }
     },
     '19-unshift' => {
-        @array.unshift: d => 11, 'e' => 12, b => 13, 'c' => 14;
+        @array.unshift: 'd', 11, 'e' => 12, 'b', 13, 'c' => 14;
         is %hash<a>, 1, 'hash a same';
         is %hash<b>, $b, 'hash b same';
         is %hash<c>, 3, 'hash c same';
@@ -219,15 +220,15 @@ my %tests =
             }
         }
 
-        is @array[.[0] + 3].key, 'a', 'array 0 + 2 key same';
-        is @array[.[0] + 3].value, 1, 'array 0 + 2 value same';
-        is @array[.[1] + 3].key, 'b', 'array 1 + 2 key same';
-        is @array[.[1] + 3].value, $b, 'array 1 + 2 value same';
-        is @array[.[2] + 3].key, 'c', 'array 2 + 2 key same';
-        is @array[.[2] + 3].value, 3, 'array 2 + 2 value same';
+        is @array[.[0] + 4].key, 'a', 'array 0 + 2 key same';
+        is @array[.[0] + 4].value, 1, 'array 0 + 2 value same';
+        is @array[.[1] + 4].key, 'b', 'array 1 + 2 key same';
+        is @array[.[1] + 4].value, $b, 'array 1 + 2 value same';
+        is @array[.[2] + 4].key, 'c', 'array 2 + 2 key same';
+        is @array[.[2] + 4].value, 3, 'array 2 + 2 value same';
     },
     '20-splice-push' => {
-        @array.splice: 3, 0, d => 11, 'e' => 12, b => 13, 'c' => 14;
+        @array.splice: 3, 0, 'd' => 11, 'e', 12, 'b', 13, 'c' => 14;
         is %hash<a>, 1, 'hash a same';
         is %hash<b>, 13, 'hash b changed';
         is %hash<c>, 14, 'hash c changed';
@@ -247,7 +248,7 @@ my %tests =
         }
     },
     '21-splice-unshift' => {
-        @array.splice: 0, 0, d => 11, 'e' => 12, b => 13, 'c' => 14;
+        @array.splice: 0, 0, 'd', 11, 'e', 12, 'b' => 13, 'c' => 14;
         is %hash<a>, 1, 'hash a same';
         is %hash<b>, $b, 'hash b same';
         is %hash<c>, 3, 'hash c same';
@@ -333,7 +334,7 @@ my %tests =
         }
     },
     '23-splice-replace' => {
-        @array.splice: 1, 1, d => 11, 'e' => 12, b => 13, 'c' => 14;
+        @array.splice: 1, 1, 'd' => 11, 'e', 12, 'b' => 13, 'c', 14;
 
         my @orig = (.[0], .[1], .[2]).map({
             when * == 1 { Nil }
