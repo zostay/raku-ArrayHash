@@ -24,7 +24,6 @@
       default is usually :hash if not specified.
     * Added the prepend method.
     * Added the shape method.
-    * Added the end method.
     * Added the Array and Hash coercion methods.
     * Removed some delegated methods for methods that haven't existed in Perl 6
       for several years, including lol, flattens, and Parcel.
