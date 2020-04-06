@@ -90,7 +90,7 @@ method ASSIGN-KEY(ArrayHash:D: $key, $value is copy) {
     }
 }
 
-method ASSIGN-POS(ArrayHash:D: $pos, Pair:D $pair) {
+method ASSIGN-POS(ArrayHash:D: $pos, Pair $pair) {
     # array-hash must contain the new pair no more than one times alrady
     PRE  { $!multivalued || @!array.grep(want($pair.key)).elems <= 1 }
 
@@ -200,9 +200,8 @@ method DELETE-KEY(ArrayHash:D: $key) {
     POST { @!array.first(want($key), :k) ~~ Nil }
 
     if %!hash{$key} :exists {
-        for @!array.grep(want($key), :k).reverse -> $pos {
-            @!array.splice($pos, 1);
-        }
+        my @pos = @!array.grep(want($key), :k);
+        @!array[ @pos ] :delete;
     }
 
     %!hash{$key} :delete;
@@ -251,14 +250,12 @@ method !values-to-pairs(\values) {
         for values.kv -> $i, $v {
             $n = $i;
 
-            note "3rd: ", $v.VAR.WHICH if $i == 3;
-
             with $k {
-                take $k => $v;
+                take $k => $=$v;
                 $k = Nil;
             }
             elsif $v ~~ Pair {
-                take $v
+                take $v.key => $=$v.value;
             }
             else {
                 $k = $v;

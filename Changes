@@ -9,12 +9,21 @@
       for all methods, such as .push. See documentation for details.
     * COMPATIBILITY BREAKING: (Maybe.) Some methods which previously returns
       List now return Seq, e.g., values, keys, kv, etc.
+    * COMPATIBILITY BREAKING: Previously it was possible to bind scalar
+      containers during construction. This is no longer the case. Binding scalar
+      values can only be performed through bind assignments to hash keys or
+      array indexes. This better matches the behavior of Array and Hash.
+    * COMPATIBILITY BREAKING: Deleting hash keys used to remove pairs from the
+      array. This now behaves similar to deletion of an Array index, which
+      replaces the array index with a Pair type object.
     * Methods that are both hashish and arrayish may have a :array/:hash adverb
       selector to allow you to choose which version of the method to use. The
       default is usually :hash if not specified.
     * Bugfix: If multi-hash('a' => 1, 'a' => 2).[0]:delete occured, the hash
       side of the multi-hash would no longer mirror the state of the array side.
       This then triggered a post-condition failure.
+    * Bugfix: It is not possible to assign an Pair type object to an Array
+      index. Previously, this would not work.
 
 v0.4.1	2019-03-12
 
