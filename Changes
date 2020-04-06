@@ -23,6 +23,7 @@
       selector to allow you to choose which version of the method to use. The
       default is usually :hash if not specified.
     * Added the prepend method.
+    * Added the shape method.
     * Bugfix: If multi-hash('a' => 1, 'a' => 2).[0]:delete occured, the hash
       side of the multi-hash would no longer mirror the state of the array side.
       This then triggered a post-condition failure.
