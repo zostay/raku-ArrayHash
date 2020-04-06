@@ -7,7 +7,7 @@ has Pair @!array handles <
     elems Bool Int end Numeric Str
     flat list lol flattens Capture Parcel Supply
     pick roll reduce combinations
-    shape
+    shape end
 >;
 
 # Methods for Arrays:
