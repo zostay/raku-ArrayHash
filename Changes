@@ -15,15 +15,16 @@
       array indexes. This better matches the behavior of Array and Hash.
     * COMPATIBILITY BREAKING: Deleting hash keys used to remove pairs from the
       array. This now behaves similar to deletion of an Array index, which
-      replaces the array index with a Pair type object.
+      replaces the array index with a Pair type object unless it is the last
+      item, in which case the array shrinks by one. (This is implemented using
+      @array[]:delete, so the behavior should have similar nuances to Raku
+      Arrays).
     * Methods that are both hashish and arrayish may have a :array/:hash adverb
       selector to allow you to choose which version of the method to use. The
       default is usually :hash if not specified.
     * Bugfix: If multi-hash('a' => 1, 'a' => 2).[0]:delete occured, the hash
       side of the multi-hash would no longer mirror the state of the array side.
       This then triggered a post-condition failure.
-    * Bugfix: It is not possible to assign an Pair type object to an Array
-      index. Previously, this would not work.
 
 v0.4.1	2019-03-12
 

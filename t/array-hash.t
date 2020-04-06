@@ -91,8 +91,8 @@ my %tests =
     '08-raku' => {
         todo 'It would be best if this passed.', 2;
         my @els = q[:a(1)], q[:b(2)], q[:c(3)];
-        is @array.raku, q[array-hash(] ~ @els[0, 1, 2].join(', ') ~ q[)], "array.raku";
-        is %hash.perl, q[array-hash(] ~ @els[0, 1, 2].join(', ') ~ q[)], "hash.raku";
+        is @array.raku, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "array.raku";
+        is %hash.raku, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "hash.raku";
     },
     '09-replace-earlier' => {
         @array[3] = 'b' => 8;
