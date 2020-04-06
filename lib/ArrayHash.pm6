@@ -5,7 +5,7 @@ unit class ArrayHash:ver<0.4.1>:auth<github:zostay> does Associative does Positi
 has %!hash;
 has Pair @!array handles <
     elems Bool Int end Numeric Str
-    flat list lol flattens Capture Parcel Supply
+    flat list flattens Capture Supply
     pick roll reduce combinations
     shape end
 >;
@@ -512,6 +512,9 @@ method rotate(ArrayHash:D: Int $n = 1) returns ArrayHash:D {
 method clone(ArrayHash:D:) returns ArrayHash:D {
     ArrayHash.new(:$!multivalued, |@!array.clone, |%!hash.clone);
 }
+
+method Array(ArrayHash:D:) returns Array:D { @!array.clone }
+method Hash(ArrayHash:D:) returns Hash:D { %!hash.clone }
 
 # my role TypedArrayHash[::TValue] does Associative[TValue] does Positional[Pair] {
 #
