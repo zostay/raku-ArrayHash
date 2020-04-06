@@ -279,14 +279,10 @@ method push(ArrayHash:D: *@values) returns ArrayHash:D {
 }
 
 method append(ArrayHash:D: +@values) returns ArrayHash:D {
-    for self!values-to-pairs(@values) -> $pair {
-        self.ASSIGN-POS(@!array.elems, $pair);
-    }
-    self
+    self.push: |@values;
 }
 
 method unshift(ArrayHash:D: *@values) returns ArrayHash:D {
-
     for self!values-to-pairs(@values).reverse.kv -> $i, $p {
         if !$!multivalued and %!hash{ $p.key } :exists {
             @!array.unshift: Pair;
@@ -299,6 +295,10 @@ method unshift(ArrayHash:D: *@values) returns ArrayHash:D {
     }
 
     self
+}
+
+method prepend(ArrayHash:D: +@values) returns ArrayHash:D {
+    self.unshift: |@values;
 }
 
 multi method splice(ArrayHash:D: &offset, Int(Cool) $size?, *@values) returns ArrayHash:D {
