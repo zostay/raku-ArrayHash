@@ -1,6 +1,6 @@
 use v6;
 
-unit class ArrayHash:ver<0.4.1>:auth<github:zostay> does Associative does Positional;
+unit class ArrayHash:ver<1.0.0>:auth<github:zostay> does Associative does Positional;
 
 has %!hash;
 has Pair @!array handles <
