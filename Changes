@@ -23,7 +23,6 @@
       selector to allow you to choose which version of the method to use. The
       default is usually :hash if not specified.
     * Added the prepend method.
-    * Added the shape method.
     * Added the Array and Hash coercion methods.
     * Added the join method.
     * Added the map method.
