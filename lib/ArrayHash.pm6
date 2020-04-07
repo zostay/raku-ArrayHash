@@ -683,7 +683,7 @@ This modifies the ArrayHash in place and returns the new value.
 
 =head2 method unshift
 
-    method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D
+    method unshift(ArrayHash:D: *@values) returns ArrayHash:D
 
 Adds the given values onto the front of the ArrayHash. Because of the L<#Last Pair Matters Rule>, these values will never replace any existing values in the data structure. In a multi-hash, these unshifted pairs will be put onto the front of the data structure without changing the primary keyed value. These insertions will be nullified if the hash is not multivalued.
 
@@ -1057,15 +1057,15 @@ Returns a L<Supply>, which emits the Pair elements of the ArrayHash in order.
 
 =head2 sub array-hash
 
-    sub array-hash(*@a, *%h) returns ArrayHash:D where { !*.multivalued }
+    sub array-hash(*@a) returns ArrayHash:D where { !*.multivalued }
 
-Constructs a new ArrayHash with multivalued being false, containing the given initial pairs in the given order (or whichever order Raku picks arbitrarily if passed as L<Pair>s.
+Constructs a new ArrayHash with multivalued being false, containing the given initial pairs in the given order.
 
 =head2 sub multi-hash
 
-    sub multi-hash(*@a, *%h) returns ArrayHash:D where { *.multivalued }
+    sub multi-hash(*@a) returns ArrayHash:D where { *.multivalued }
 
-Constructs a new multivalued ArrayHash containing the given initial pairs in the given order. (Again, if you use L<Pair>s to do the initial insertion, the order will be randomized, but stable upon insertion.)
+Constructs a new multivalued ArrayHash containing the given initial pairs in the given order.
 
 =end pod
 
