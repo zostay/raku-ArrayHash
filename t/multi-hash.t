@@ -103,9 +103,14 @@ my %tests =
     },
     '08-raku' => {
         todo 'It would be best if this passed.', 2;
-        my @els = q[:a(1)], q[:b(2)], q[:c(3)], q[:a(4)];
-        is @array.raku, q[multi-hash(] ~ @els[0..3].join(', ') ~ q[)], "array.raku";
-        is %hash.raku, q[multi-hash(] ~ @els[0..3].join(', ') ~ q[)], "hash.raku";
+        if @array^.can('raku') {
+            my @els = q[:a(1)], q[:b(2)], q[:c(3)], q[:a(4)];
+            is @array.raku, q[multi-hash(] ~ @els[0..3].join(', ') ~ q[)], "array.raku";
+            is %hash.raku, q[multi-hash(] ~ @els[0..3].join(', ') ~ q[)], "hash.raku";
+        }
+        else {
+            skip 'The .raku method does not exist in this version of Perl 6.', 2;
+        }
     },
     '09-replace-earlier' => {
         @array[3] = 'b' => 8;

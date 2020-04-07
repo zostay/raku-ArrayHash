@@ -90,9 +90,20 @@ my %tests =
     },
     '08-raku' => {
         todo 'It would be best if this passed.', 2;
+        if @array^.can('raku') {
+            my @els = q[:a(1)], q[:b(2)], q[:c(3)];
+            is @array.raku, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "array.raku";
+            is %hash.raku, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "hash.raku";
+        }
+        else {
+            skip 'The .raku method does not exist in this version of Perl 6.', 2;
+        }
+    },
+    '08-perl' => {
+        todo 'It would be best if this passed.', 2;
         my @els = q[:a(1)], q[:b(2)], q[:c(3)];
-        is @array.raku, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "array.raku";
-        is %hash.raku, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "hash.raku";
+        is @array.perl, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "array.perl";
+        is %hash.perl, q[array-hash(] ~ @els[0..2].join(', ') ~ q[)], "hash.perl";
     },
     '09-replace-earlier' => {
         @array[3] = 'b' => 8;
