@@ -5,9 +5,9 @@ unit class ArrayHash:ver<0.4.1>:auth<github:zostay> does Associative does Positi
 has %!hash;
 has Pair @!array handles <
     elems Bool Int end Numeric Str
-    flat list flattens Capture Supply
+    flat list Capture Supply
     pick roll reduce combinations
-    shape join map grep first head
+    join map grep first head
     tail sort produce
 >;
 
@@ -673,6 +673,14 @@ This returns the value lookup by index. You can use this to retrieve the pair at
 
 Adds the given values onto the end of the ArrayHash. Because of the L<#Last Pair Matters Rule>, these values will always replace any existing values with matching keys.
 
+=head2 method append
+
+    method append(ArrayHash:D: +@values) returns ArrayHash:D
+
+Adds the given values onto the end of the ArrayHash, just like the L<push method#method push>, but it flattens the lists given as arguments.
+
+This modifies the ArrayHash in place and returns the new value.
+
 =head2 method unshift
 
     method unshift(ArrayHash:D: *@values, *%values) returns ArrayHash:D
@@ -688,6 +696,14 @@ Adds the given values onto the front of the ArrayHash. Because of the L<#Last Pa
     @m.push: 'a' => 3, 'b' => 4, 'c' => 5;
     @m.raku.say;
     #> multi-hash("a" => 3, "b" => 4, "c" => 5, "a" => 1, "b" => 2);
+
+=head2 method prepend
+
+    method prepend(ArrayHash:D: +@values) returns ArrayHash:D
+
+Adds teh given values onto the beginning of the ArrayHash, just like the L<unshift method#method unshift>, but it flattens the lists given as arguments.
+
+This modifies the ArrayHash in place and returns the new value.
 
 =head2 method splice
 
@@ -728,9 +744,9 @@ This method will fail with a L<X::Hash::Store::OddNumber> exception if an odd nu
 
 =head2 method sort
 
-    method sort(ArrayHash:D: 5by = &infix:<cmp>) returns ArrayHash:D
+    method sort(ArrayHash:D: &by = &infix:<cmp>) returns Seq:D
 
-This is not implemented.
+Returns a sequence of L<Pair>s from the ArrayHash sorted according to the given sort function, C<&by>.
 
 =head2 method unique
 
@@ -869,6 +885,175 @@ Returns the ArrayHash, but with pairs inserted in reverse order.
     method rotate(ArrayHash:D: Int $n = 1) returns ArrayHash:D
 
 Returns the ArrayHash, but with the pairs inserted rotated by C<$n> elements.
+
+=head2 method elems
+
+    method elems(ArrayHash:D:) returns Int:D
+
+Returns the number of elements stored in the ArrayHash.
+
+=head2 method end
+
+    method end(ArrayHash:D:) returns Int:D
+
+Returns the index of the last element stored in the ArrayHash.
+
+=head2 method flat
+
+    method flat(ArrayHash:D:) returns Seq:D
+
+Returns a sequence of the Pairs stored in the ArrayHash. As the items stored are always L<Pair>s, this will always be functionally equivalent to the L<pairs method#method pairs>.
+
+=head2 method pick
+
+    multi method pick(ArrayHash:D:) returns Pair
+    multi method pick(ArrayHash:D: Whatever) returns Seq:D
+    multi method pick(ArrayHash:D: $count) returns Seq:D
+
+When called with no arguments, returns a random L<Pair> stored in the ArrayHash. It will return Nil if the ArrayHash is empty.
+
+When called with arguments, it will return a sequence of 0 or more unique items stored in the ArrayHash in random order. If L<Whatever> is passed, all Pairs will be reutrned from the sequence in random order.
+
+=head2 method roll
+
+    multi method roll(ArrayHash:D:) returns Pair
+    multi method roll(ArrayHash:D: $count) returns Seq:D
+
+When called with no arguemnts, returns a random L<Pair> stored in the ArrayHash. It will return Nil if the ArrayHash is empty.
+
+When called with a numeric C<$count>, it will return C<$count> Pairs which are pulled random from the elements stored in the ArrayHash. The items pulled are not guaranteed to be unique.
+
+=head2 method reduce
+
+    method reduce(ArrayHash:D: &with)
+
+Performs inductive iteration over the L<Pair>s stored in the ArrayHash.
+
+For an empty ArrayHash, the given code will be called once with no arguments and the return value of that code is returned by the reduce method.
+
+For a single item ArrayHash, the given code will be called once with a single argument, the single item stored, and the return value of that code is returned by the reduce method.
+
+For a two item ArrayHash, the given code will be called once with two arguments, the first and second items stored, and the return value of that code is returned by the reduce method.
+
+For a three or more item ArrayHash, the given code will be called two or more times. The first call will receive the first two elements of the ArrayHash as arguments. All subsequent calls will receive the return of the previous call as the first argument and the next ArrayHash element as the second argument. The final return value of the C<&with> code will be returned from the reduce method.
+
+=head2 method produce
+
+    method produce(ArrayHash:D: &with) returns Seq:D
+
+This method operates in precisely the same manner as the L<reduce method#method reduce>, but instead of only returning the result from the final call to C<&with>, it returns a sequence that iterates through every value returned by calls to C<&with>.
+
+=head2 method combinations
+
+    multi method combinations(ArrayHash:D: Int() $of) returns Seq:D
+    multi method combinations(ArrayHash:D: Iterable:D $of = 0..*) returns Seq:D
+
+This method returns a seqeuence of the requested combinations of Pairs stored in the ArrayHash.
+
+=head2 method join
+
+    method join(ArrayHash:D: $sep = '') returns Str
+
+Concatenates the L<Pair>s stored in the ArrayHash into a string using the given separator, C<$sep>.
+
+=head2 method map
+
+    method map(ArrayHash:D: &block) returns Seq:D
+
+Returns a sequence where the result of the operation of C<&block> being applied to each L<Pair> in the ArrayHash is returned.
+
+=head2 method grep
+
+    method grep(ArrayHash:D: Mu $matcher, :$k, :$v, :$kv, :$p) returns Seq:D
+
+Returns a sequence containing only the values in the ArrayHash that match the given C<$matcher>. By default, the result will be the L<Pair>s matched, but by supplying an adverb, you can modify which type of information is returned:
+
+=item C<:k> causes only the keys to be returned.
+
+=item C<:v> causes only the values to be returned.
+
+=item C<:kv> causes the keys and values to be returned in an alternating sequence.
+
+=item C<:p> causes the pairs to be returned (the default).
+
+=head2 method first
+
+    method first(ArrayHash:D: Mu $matcher?, :$k, :$v, :$kv, :$p, :$end)
+
+Returns the first L<Pair> from the ArrayHash that matches the given matcher, C<$matcher> (or just the first element if no matcher is provided). The return value can be modified by using the C<:k>, C<:v>, C<:kv>, and C<:p> adverbs. See the L<grep method#method grep> for details. Instead of matching from the front of the list, it can match from the end if the C<:end> adverb is given.
+
+=head2 method head
+
+    method head(ArrayHash:D:) returns Pair
+    method head(ArrayHash:D: $n) returns Seq:D
+    method head(ArrayHash:D: &c) returns Seq:D
+
+Returns the L<Pair>s from the front of the ArrayHash. With no arguments, it returns the first L<Pair> or C<Nil> if the ArrayHash is empty.
+
+If a number is given, then a sequence of that many items from the front of the ArrayHash is returned.
+
+If a L<WhateverCode> range is given, e.g., C<*-3>, then all the items from front of the list until that L<WhateverCode> range starts from the back is returned.
+
+=head2 method tail
+
+    method tail(ArrayHash:D:) returns Pair
+    method tail(ArrayHash:D: $n) returns Seq:D
+    method tail(ArrayHash:D: &c) returns Seq:D
+
+Returns the L<Pair>s from the back of the ArrayHash. With no arguments, it returns the last L<Pair> or C<Nil> if the ArrayHash is empty.
+
+If a number is given, then a sequence of that many items from the back of the ArrayHash is returned.
+
+If a L<WhateverCode> range is given, e.g., C<*-3>, then all the items from back of the list until that L<WhateverCode> range starts from the front is returned.
+
+
+=head2 method Array
+
+    method Array(ArrayHash:D:) returns Array:D
+
+Returns an L<Array> object containing the pairs in the ArrayHash.
+
+=head2 method Hash
+
+    method Hash(ArrayHash:D:) returns Hash:D
+
+Returns a L<Hash> object containing the pairs of the ArrayHash. If this is a multi-hash, any keys with multiple values will be collapsed according to the L<Last Pair Matters Rule#Last Pair Matters Rule>.
+
+=head2 method Bool
+
+    method Bool(ArrayHash:D:) returns Bool:D
+
+Returns C<True> if there are one or more items stored in the object. Returns C<False> if the ArrayHash is empty.
+
+=head2 method Int
+
+    method Int(ArrayHash:D:) returns Int:D
+
+Returns the number of elements stored in the ArrayHash.
+
+=head2 method Numeric
+
+    method Numeric(ArrayHash:D:) returns Numeric:D
+
+Returns the number of elements stored in the ArrayHash.
+
+=head2 method Str
+
+    method Str(ArrayHash:D:) returns Str:D
+
+Returns a string representation of the ArrayHash. This will include a string representation of all the L<Pairs> stored with a space between them.
+
+=head2 method Capture
+
+    method Capture(ArrayHash:D:) returns Capture:D
+
+Returns a L<Capture> which will have the positional arguments set to the values of the elements of this ArrayHash.
+
+=head2 method Supply
+
+    method Supply(ArrayHash:D:) returns Supply:D
+
+Returns a L<Supply>, which emits the Pair elements of the ArrayHash in order.
 
 =head2 sub array-hash
 

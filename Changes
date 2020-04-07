@@ -25,6 +25,15 @@
     * Added the prepend method.
     * Added the shape method.
     * Added the Array and Hash coercion methods.
+    * Added the join method.
+    * Added the map method.
+    * Added the grep method.
+    * Added the first method.
+    * Added the head method.
+    * Added the tail method.
+    * Added the sort method.
+    * Added the produce method.
+    * Removed the shape method.
     * Removed some delegated methods for methods that haven't existed in Perl 6
       for several years, including lol, flattens, and Parcel.
     * Bugfix: If multi-hash('a' => 1, 'a' => 2).[0]:delete occured, the hash
