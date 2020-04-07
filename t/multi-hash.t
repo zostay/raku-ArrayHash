@@ -103,7 +103,7 @@ my %tests =
     },
     '08-raku' => {
         todo 'It would be best if this passed.', 2;
-        if @array.^can('raku') {
+        if ().^can('raku') {
             my @els = q[:a(1)], q[:b(2)], q[:c(3)], q[:a(4)];
             is @array.raku, q[multi-hash(] ~ @els[0..3].join(', ') ~ q[)], "array.raku";
             is %hash.raku, q[multi-hash(] ~ @els[0..3].join(', ') ~ q[)], "hash.raku";
