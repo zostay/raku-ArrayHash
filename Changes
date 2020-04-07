@@ -1,4 +1,4 @@
-{{$NEXT}}
+v1.0.0	2020-04-07
 
     * COMPATIBILITY BREAKING: Previously, this class has accepted named
       arguments as hash items to add to the array-hash or multi-hash. However,
