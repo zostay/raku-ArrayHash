@@ -7,32 +7,9 @@ has Pair @!array handles <
     elems Bool Int end Numeric Str
     flat list flattens Capture Supply
     pick roll reduce combinations
-    shape
+    shape join map grep first head
+    tail sort produce
 >;
-
-# Methods for Arrays:
-#
-# gist pop push append elems clone flat shift unshift prepend splice shape
-# default of dynamic
-#
-# Methods for Lists:
-#
-# ACCEPTS elems end keys values kv pairs antipairs invert join map flatmap gist
-# grep first head tail categorize classify Bool Str Int Numeric Capture pick
-# roll eager reverse rotate sort reduce produce combinations permutations rotor
-# batch cross zip roundrobin sum fmt from to sink Set cmp
-#
-# Methods for Hashes:
-#
-# classify-list categorize-list push append default keyof of dynamic
-#
-# elems ACCEPTS gist keys values pairs antipairs invert kv list sort Int Numeric
-# Bool Capture
-#
-# Overlap:
-#
-# gist push append default of dynamic elems ACCEPTS keys values pairs antipairs
-# invert kv sort Int Numeric Bool Capture
 
 has Bool $.multivalued = False;
 
@@ -388,16 +365,8 @@ method unique(ArrayHash:D:) returns ArrayHash:D {
     }
 }
 
-method sort(ArrayHash:D: $by = &infix:<cmp>) returns ArrayHash:D {
-    die "not yet implemented";
-}
-
-method squish(ArrayHash:D:) returns ArrayHash:D {
-    die "not yet implemented";
-}
-
 method rotor(ArrayHash:D:) {
-    die "not yet implemented";
+    die "not implemented";
 }
 
 method pop(ArrayHash:D:) returns Pair {
@@ -462,15 +431,15 @@ method pairs(
     }
 }
 
-method invert() returns List:D {
-    die 'not yet implemented'
+method invert() returns Seq:D {
+    die 'not implemented'
 }
 
-method antipairs() returns List:D {
-    die 'not yet implemented'
+method antipairs() returns Seq:D {
+    die 'not implemented'
 }
 
-method permutations() {
+method permutations() returns Seq:D {
     die 'not yet implmeneted'
 }
 
@@ -516,31 +485,55 @@ method clone(ArrayHash:D:) returns ArrayHash:D {
 method Array(ArrayHash:D:) returns Array:D { @!array.clone }
 method Hash(ArrayHash:D:) returns Hash:D { %!hash.clone }
 
-# my role TypedArrayHash[::TValue] does Associative[TValue] does Positional[Pair] {
-#
-# }
-#
-# my role TypedArrayHash[::TValue, ::TKey] does Associative[TValue] does Positional[Pair] {
-# }
-#
-# # Taken from Hash.pm
-# method ^parameterize(Mu:U \hash, Mu:U \t, |c) {
-#     if c.elems == 0 {
-#         my $what := hash.^mixin(TypedArrayHash[t]);
-#         # needs to be done in COMPOSE phaser when that works
-#         $what.^set_name("{hash.^name}[{t.^name}]");
-#         $what;
-#     }
-#     elsif c.elems == 1 {
-#         my $what := hash.^mixin(TypedArrayHash[t, c[0].WHAT]);
-#         # needs to be done in COMPOSE phaser when that works
-#         $what.^set_name("{hash.^name}[{t.^name},{c[0].^name}]");
-#         $what;
-#     }
-#     else {
-#         die "Can only type-constrain ArrayHash with [ValueType] or [ValueType,KeyType]";
-#     }
-# }
+method categorize(|) {
+    die 'not implemented';
+}
+
+method classify(|) {
+    die 'not implemented';
+}
+
+method eager(|) {
+    die 'not implemented';
+}
+
+method batch(|) {
+    die 'not implemented';
+}
+
+method cross(|) {
+    die 'not implemented';
+}
+
+method zip(|) {
+    die 'not implemented';
+}
+
+method roundrobin(|) {
+    die 'not implemented';
+}
+
+method sum(|) {
+    die 'not implemented';
+}
+
+method Set(|) {
+    die 'not implemented';
+}
+
+sub cmp(|) {
+    die 'not implemented';
+}
+
+sub classify-list(|) {
+    die 'not implemented';
+}
+
+sub categorize-list(|) {
+    die 'not implemented';
+}
+
+
 
 our sub array-hash(|c) is export { ArrayHash.new(|c) }
 our sub multi-hash(|c) is export { ArrayHash.new(|c, :multivalued) }
@@ -737,7 +730,7 @@ This method will fail with a L<X::Hash::Store::OddNumber> exception if an odd nu
 
     method sort(ArrayHash:D: 5by = &infix:<cmp>) returns ArrayHash:D
 
-This is not yet implemented.
+This is not implemented.
 
 =head2 method unique
 
@@ -745,15 +738,9 @@ This is not yet implemented.
 
 For a multivalued hash, this returns the same hash as a non-multivalued hash. Otherwise, it returns itself.
 
-=head2 method squish
-
-    method squish(ArrayHash:D:) returns ArrayHash:D
-
-This is not yet implemented.
-
 =head2 method rotor
 
-Not yet implemented.
+This is not implemented.
 
 =head2 method pop
 
@@ -841,17 +828,17 @@ This returns a sequence of pairs stored in the ArrayHash. In hash mode, the defa
 
     method invert() returns List:D
 
-Not yet implemented.
+Not implemented.
 
 =head2 method antipairs
 
     method antipairs() returns List:D
 
-Not yet implemented.
+Not implemented.
 
 =head2 method permutations
 
-Not yet implemented.
+Not implemented.
 
 =head2 method raku
 
